@@ -6,7 +6,7 @@ export async function POST(request) {
     const { variantId, userId, userEmail } = await request.json();
     const validVariants = Object.values(PLAN_VARIANTS);
     if (!validVariants.includes(String(variantId))) {
-      return NextResponse.json({ error: 'Plan no valido' }, { status: 400 });
+      return NextResponse.json({ error: 'Plan no valido', variantId, validVariants }, { status: 400 });
     }
     if (!userId || !userEmail) {
       return NextResponse.json({ error: 'Usuario no autenticado' }, { status: 401 });
@@ -15,6 +15,6 @@ export async function POST(request) {
     return NextResponse.json({ checkoutUrl });
   } catch (error) {
     console.error('Checkout error:', error);
-    return NextResponse.json({ error: 'Error al crear el checkout' }, { status: 500 });
+    return NextResponse.json({ error: error.message, details: error.toString() }, { status: 500 });
   }
 }
