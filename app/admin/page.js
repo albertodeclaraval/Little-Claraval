@@ -69,6 +69,13 @@ export default function AdminPage() {
           </div>
           <span style={{ color: colors.vino, fontSize: '1.1rem' }}>→</span>
         </a>
+        <a href="/admin/importar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'white', borderRadius: '8px', padding: '1rem 1.25rem', marginBottom: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', textDecoration: 'none', color: colors.texto }}>
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '0.95rem', color: colors.vino }}>Importar desde Sheets</div>
+            <div style={{ fontSize: '0.78rem', color: '#888', marginTop: '0.2rem' }}>Santos, lecturas, reflexiones, journals y más</div>
+          </div>
+          <span style={{ color: colors.vino, fontSize: '1.1rem' }}>→</span>
+        </a>
         <h3 style={{ color: colors.vino, marginBottom: '1rem', fontSize: '1rem' }}>Códigos Promo</h3>
         <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem', marginBottom: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
           <h3 style={{ marginBottom: '1rem', color: colors.vino }}>Crear codigo nuevo</h3>
