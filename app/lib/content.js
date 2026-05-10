@@ -1,10 +1,5 @@
 import { supabase } from './supabase'
 
-var ROSARY_SETS = {
-  0: 'gloriosos', 1: 'gozosos', 2: 'dolorosos',
-  3: 'gloriosos', 4: 'luminosos', 5: 'dolorosos', 6: 'gozosos'
-}
-
 export async function fetchSaint(monthDay) {
   var { data } = await supabase
     .from('saints')
@@ -36,13 +31,13 @@ export async function fetchLiturgyHour(hourType, psalterWeek, weekday, season, l
 }
 
 export async function fetchRosary(weekday, lang) {
-  var mysterySet = ROSARY_SETS[weekday] || 'gozosos'
-  var { data } = await supabase
+  var { data, error } = await supabase
     .from('rosary_mysteries')
     .select('*')
-    .eq('mystery_set', mysterySet)
+    .contains('weekdays', [weekday])
     .eq('lang', lang || 'es')
     .maybeSingle()
+  console.log('[fetchRosary] weekday=%d lang=%s data=%o error=%o', weekday, lang || 'es', data, error)
   return data
 }
 
