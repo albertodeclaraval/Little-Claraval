@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import ComingSoon from './page.comingsoon'
 import { fetchDailyReadings, fetchLiturgicalDay } from './lib/liturgical-api'
-import { fetchSaint, fetchReflection, fetchLiturgyHour, fetchRosary, fetchChaplet, fetchAppLinks } from './lib/content'
+import { fetchSaint, fetchReflection, fetchLiturgyHour, fetchRosary, fetchChaplet, fetchAppLinks, fetchDayReadings } from './lib/content'
 
 var supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -140,6 +140,7 @@ function ViewHoy({ tier, onSwitchView }) {
   var [rosary, setRosary] = useState(null)
   var [chaplet, setChaplet] = useState(null)
   var [appLinks, setAppLinks] = useState([])
+  var [supabaseReadings, setSupabaseReadings] = useState(null)
   var [loading, setLoading] = useState(true)
   var [open, setOpen] = useState({
     laudes: hour >= 5 && hour < 12,
@@ -160,7 +161,8 @@ function ViewHoy({ tier, onSwitchView }) {
       fetchLiturgyHour('completas', null, null, null, 'es'),
       fetchRosary(weekday, 'es'),
       fetchChaplet('es'),
-      fetchAppLinks()
+      fetchAppLinks(),
+      fetchDayReadings(dateStr)
     ]).then(function(r) {
       setReadings(r[0])
       setLitDay(r[1])
@@ -170,6 +172,7 @@ function ViewHoy({ tier, onSwitchView }) {
       setRosary(r[7])
       setChaplet(r[8])
       setAppLinks(r[9] || [])
+      setSupabaseReadings(r[10])
       setLoading(false)
     })
   }, [])
@@ -204,11 +207,52 @@ function ViewHoy({ tier, onSwitchView }) {
       {/* A) Lecturas del día */}
       <div style={Object.assign({}, s.card, { borderLeft: '3px solid ' + seasonColor })}>
         <div style={s.cardTitle}>Lecturas del Día</div>
-        {!rd ? (
+        {supabaseReadings ? (
+          /* Texto completo desde Supabase */
+          <>
+            {supabaseReadings.first_reading_ref_es && (
+              <div className="reading-block">
+                <div className="reading-label">Primera Lectura</div>
+                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: '0 0 0.6rem' }}>{supabaseReadings.first_reading_ref_es}</p>
+                {supabaseReadings.first_reading_text_es && (
+                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.first_reading_text_es}</p>
+                )}
+              </div>
+            )}
+            {supabaseReadings.psalm_ref_es && (
+              <div className="reading-block">
+                <div className="reading-label">Salmo</div>
+                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: '0 0 0.6rem' }}>{supabaseReadings.psalm_ref_es}</p>
+                {supabaseReadings.psalm_text_es && (
+                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.psalm_text_es}</p>
+                )}
+              </div>
+            )}
+            {supabaseReadings.second_reading_ref_es && (
+              <div className="reading-block">
+                <div className="reading-label">Segunda Lectura</div>
+                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: '0 0 0.6rem' }}>{supabaseReadings.second_reading_ref_es}</p>
+                {supabaseReadings.second_reading_text_es && (
+                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.second_reading_text_es}</p>
+                )}
+              </div>
+            )}
+            {supabaseReadings.gospel_ref_es && (
+              <div className="reading-block" style={{ borderBottom: 'none', marginBottom: 0, backgroundColor: '#fdf8f0', padding: '0.75rem', borderRadius: '6px', borderLeft: '3px solid ' + colors.vino }}>
+                <div className="reading-label" style={{ color: colors.vino }}>Evangelio</div>
+                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.vino, margin: '0 0 0.6rem' }}>{supabaseReadings.gospel_ref_es}</p>
+                {supabaseReadings.gospel_text_es && (
+                  <p style={{ lineHeight: 1.9, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.gospel_text_es}</p>
+                )}
+              </div>
+            )}
+          </>
+        ) : !rd ? (
           <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>
             No se pudieron cargar las lecturas. Verifica tu conexión.
           </p>
         ) : (
+          /* Solo referencias desde la API */
           <>
             {rd.firstReading && (
               <div className="reading-block">
@@ -234,16 +278,9 @@ function ViewHoy({ tier, onSwitchView }) {
                 <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.vino, margin: 0 }}>{rd.gospel}</p>
               </div>
             )}
-            {readings.usccbLink && (
-              <a
-                href={readings.usccbLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: 'inline-block', marginTop: '1rem', fontSize: '0.8rem', color: colors.azul, textDecoration: 'none' }}
-              >
-                Leer texto completo en USCCB →
-              </a>
-            )}
+            <p style={{ marginTop: '1rem', fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>
+              Texto completo próximamente
+            </p>
           </>
         )}
       </div>

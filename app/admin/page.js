@@ -61,7 +61,15 @@ export default function AdminPage() {
   return (
     <div style={{ backgroundColor: colors.pergamino, minHeight: '100vh', fontFamily: 'Georgia, serif', color: colors.texto, padding: '2rem' }}>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <h1 style={{ color: colors.vino, marginBottom: '1.5rem' }}>Admin - Codigos Promo</h1>
+        <h1 style={{ color: colors.vino, marginBottom: '1rem' }}>Admin</h1>
+        <a href="/admin/lecturas" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'white', borderRadius: '8px', padding: '1rem 1.25rem', marginBottom: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', textDecoration: 'none', color: colors.texto }}>
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '0.95rem', color: colors.vino }}>Editor de Lecturas</div>
+            <div style={{ fontSize: '0.78rem', color: '#888', marginTop: '0.2rem' }}>Cargar y editar lecturas litúrgicas del día</div>
+          </div>
+          <span style={{ color: colors.vino, fontSize: '1.1rem' }}>→</span>
+        </a>
+        <h3 style={{ color: colors.vino, marginBottom: '1rem', fontSize: '1rem' }}>Códigos Promo</h3>
         <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem', marginBottom: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
           <h3 style={{ marginBottom: '1rem', color: colors.vino }}>Crear codigo nuevo</h3>
           <div style={{ marginBottom: '0.75rem' }}>

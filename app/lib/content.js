@@ -63,3 +63,12 @@ export async function fetchAppLinks() {
     .order('sort_order')
   return data || []
 }
+
+export async function fetchDayReadings(date) {
+  var { data } = await supabase
+    .from('readings')
+    .select('*')
+    .eq('date', date)
+    .maybeSingle()
+  return data
+}
