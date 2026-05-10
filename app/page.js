@@ -79,6 +79,13 @@ var ROSARY_NAMES = {
   6: 'Misterios Gozosos'
 }
 
+var ROSARY_NAMES_LATIN = {
+  0: 'Mysteria Gloriosa', 1: 'Mysteria Gaudiosa',
+  2: 'Mysteria Dolorosa', 3: 'Mysteria Gloriosa',
+  4: 'Mysteria Luminosa', 5: 'Mysteria Dolorosa',
+  6: 'Mysteria Gaudiosa'
+}
+
 function getSeasonColor(season) {
   if (!season) return colors.verde
   var s = season.toLowerCase()
@@ -118,6 +125,231 @@ function Accordion({ title, isOpen, onToggle, highlight, children }) {
 
 function Proximamente() {
   return <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Próximamente</p>
+}
+
+var prayerSectionHeader = { fontSize: '0.78rem', fontWeight: 'bold', color: '#782F40', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 0.5rem' }
+var prayerBodyText = { lineHeight: 1.8, fontSize: '0.9rem', color: '#444', margin: '0 0 0.3rem' }
+var prayerLatinText = { fontStyle: 'italic', color: '#aaa', fontSize: '0.85rem', margin: 0 }
+var prayerLabel = { fontSize: '0.72rem', color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.2rem' }
+var prayerDivider = { borderTop: '1px solid #e8dcc8', margin: '0.9rem 0' }
+
+function CoronillaContent({ chaplet }) {
+  var [showInstructions, setShowInstructions] = useState(false)
+  var c = chaplet && chaplet.content
+  if (!c || typeof c !== 'object') {
+    return <p style={prayerBodyText}>{String(c || '')}</p>
+  }
+  return (
+    <div>
+      {c.title && <h3 style={{ fontSize: '1rem', color: '#2C1810', margin: '0 0 0.4rem', fontWeight: 'bold' }}>{c.title}</h3>}
+      {c.introduction && <p style={{ lineHeight: 1.75, fontSize: '0.88rem', color: '#777', fontStyle: 'italic', margin: '0 0 0.9rem' }}>{c.introduction}</p>}
+
+      {c.opening_prayers && (
+        <>
+          <div style={prayerDivider} />
+          <p style={prayerSectionHeader}>Oraciones Iniciales</p>
+          {[
+            { key: 'sign_of_cross', label: 'Señal de la Cruz' },
+            { key: 'opening_prayer', label: 'Oración Inicial' },
+            { key: 'our_father', label: 'Padrenuestro' },
+            { key: 'hail_mary', label: 'Ave María' },
+            { key: 'apostles_creed', label: 'Credo' },
+          ].map(function(item) {
+            var text = c.opening_prayers[item.key]
+            if (!text) return null
+            return (
+              <div key={item.key} style={{ marginBottom: '0.7rem' }}>
+                <p style={prayerLabel}>{item.label}</p>
+                <p style={prayerBodyText}>{text}</p>
+              </div>
+            )
+          })}
+        </>
+      )}
+
+      {c.eternal_father && (
+        <>
+          <div style={prayerDivider} />
+          <p style={prayerSectionHeader}>En las cuentas grandes</p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+            <span style={{ fontSize: '1.1rem', color: '#782F40', flexShrink: 0, lineHeight: 1.65 }}>●</span>
+            <p style={prayerBodyText}>{c.eternal_father}</p>
+          </div>
+        </>
+      )}
+
+      {c.small_bead && (
+        <>
+          <div style={prayerDivider} />
+          <p style={prayerSectionHeader}>En las cuentas pequeñas</p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.7rem', color: '#3C5078', flexShrink: 0, lineHeight: 2.6, letterSpacing: '0.15em' }}>○○○</span>
+            <p style={prayerBodyText}>{c.small_bead}</p>
+          </div>
+        </>
+      )}
+
+      {c.closing && (
+        <>
+          <div style={prayerDivider} />
+          {c.closing.holy_god && (
+            <div style={{ marginBottom: '0.9rem' }}>
+              <p style={prayerSectionHeader}>
+                Al finalizar{' '}
+                <span style={{ fontStyle: 'italic', textTransform: 'none', fontWeight: 'normal', letterSpacing: 0 }}>
+                  (repetir 3 veces)
+                </span>
+              </p>
+              <p style={prayerBodyText}>{c.closing.holy_god}</p>
+            </div>
+          )}
+          {c.closing.final_prayer && (
+            <div>
+              <p style={prayerSectionHeader}>Oración Final</p>
+              <p style={prayerBodyText}>{c.closing.final_prayer}</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {c.instructions && c.instructions.steps && (
+        <>
+          <div style={prayerDivider} />
+          <button
+            onClick={function() { setShowInstructions(function(v) { return !v }) }}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#4B643C', fontSize: '0.82rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+          >
+            <span>{showInstructions ? '▾' : '▸'}</span>
+            <span>Cómo rezarla</span>
+          </button>
+          {showInstructions && (
+            <ol style={{ margin: '0.6rem 0 0', paddingLeft: '1.3rem' }}>
+              {c.instructions.steps.map(function(step, i) {
+                return <li key={i} style={{ fontSize: '0.86rem', color: '#555', lineHeight: 1.7, marginBottom: '0.3rem' }}>{step}</li>
+              })}
+            </ol>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+var PRAYER_LABELS = {
+  sign_of_cross: 'Señal de la Cruz', apostles_creed: 'Credo',
+  our_father: 'Padrenuestro', hail_mary: 'Ave María',
+  glory_be: 'Gloria', fatima_prayer: 'Oración de Fátima',
+  hail_holy_queen: 'Salve', final_prayer: 'Oración Final'
+}
+
+var MYSTERY_CIRCLES = ['①', '②', '③', '④', '⑤']
+
+function RosarioContent({ rosary, weekday }) {
+  var [showInstructions, setShowInstructions] = useState(false)
+  var [showPrayers, setShowPrayers] = useState(false)
+
+  if (!rosary) return <Proximamente />
+
+  var mysteries = rosary.mysteries
+  var prayers = rosary.prayers
+  var setName = ROSARY_NAMES[weekday] || 'Rosario'
+  var setNameLatin = ROSARY_NAMES_LATIN[weekday] || ''
+
+  return (
+    <div>
+      <h3 style={{ fontSize: '1rem', color: '#2C1810', margin: '0 0 0.2rem', fontWeight: 'bold' }}>{setName}</h3>
+      {setNameLatin && <p style={{ fontStyle: 'italic', color: '#aaa', fontSize: '0.83rem', margin: '0 0 0.9rem' }}>{setNameLatin}</p>}
+
+      {/* Cómo rezar — colapsable */}
+      <div style={{ marginBottom: '1rem' }}>
+        <button
+          onClick={function() { setShowInstructions(function(v) { return !v }) }}
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#4B643C', fontSize: '0.82rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+        >
+          <span>{showInstructions ? '▾' : '▸'}</span>
+          <span>Cómo rezar el Rosario</span>
+        </button>
+        {showInstructions && (
+          <ol style={{ margin: '0.6rem 0 0', paddingLeft: '1.3rem', backgroundColor: '#fdf8f0', borderRadius: '6px', padding: '0.7rem 0.7rem 0.7rem 2rem' }}>
+            {[
+              'Señal de la Cruz',
+              'Credo',
+              '1 Padrenuestro + 3 Ave Marías + Gloria',
+              'Anunciar cada misterio — 1 Padrenuestro + 10 Ave Marías + Gloria + Oración de Fátima',
+              'Salve + Oración final',
+            ].map(function(step, i) {
+              return <li key={i} style={{ fontSize: '0.86rem', color: '#555', lineHeight: 1.7, marginBottom: '0.3rem' }}>{step}</li>
+            })}
+          </ol>
+        )}
+      </div>
+
+      {/* Los 5 Misterios */}
+      {mysteries && Array.isArray(mysteries) && mysteries.length > 0 && (
+        <div>
+          <p style={prayerSectionHeader}>Los 5 Misterios</p>
+          {mysteries.map(function(m, i) {
+            var circle = MYSTERY_CIRCLES[i] || String(i + 1)
+            return (
+              <div key={i} style={{ marginBottom: '1.1rem', paddingBottom: '1.1rem', borderBottom: i < mysteries.length - 1 ? '1px solid #ede5d4' : 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', marginBottom: '0.3rem' }}>
+                  <span style={{ fontSize: '1.05rem', color: '#782F40', flexShrink: 0, fontWeight: 'bold', lineHeight: 1.4 }}>{circle}</span>
+                  <div>
+                    <span style={{ fontSize: '0.92rem', fontWeight: 'bold', color: '#2C1810' }}>{m.title}</span>
+                    {m.title_latin && <span style={{ display: 'block', fontStyle: 'italic', color: '#bbb', fontSize: '0.8rem' }}>{m.title_latin}</span>}
+                  </div>
+                </div>
+                {m.scripture && (
+                  <p style={{ fontSize: '0.76rem', color: '#bbb', margin: '0.2rem 0 0.45rem 1.6rem' }}>{m.scripture}</p>
+                )}
+                {m.meditation && (
+                  <p style={{ lineHeight: 1.8, fontSize: '0.88rem', color: '#444', margin: '0 0 0.45rem 1.6rem' }}>{m.meditation}</p>
+                )}
+                {m.fruit && (
+                  <p style={{ fontSize: '0.8rem', margin: '0 0 0 1.6rem' }}>
+                    <span style={{ color: '#bbb', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fruto: </span>
+                    <span style={{ fontStyle: 'italic', color: '#666' }}>{m.fruit}</span>
+                    {m.fruit_latin && <span style={{ fontStyle: 'italic', color: '#bbb', fontSize: '0.78rem' }}> / {m.fruit_latin}</span>}
+                  </p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Oraciones — colapsable */}
+      {prayers && typeof prayers === 'object' && (
+        <div style={{ borderTop: '1px solid #e8dcc8', paddingTop: '0.75rem' }}>
+          <button
+            onClick={function() { setShowPrayers(function(v) { return !v }) }}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#4B643C', fontSize: '0.82rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+          >
+            <span>{showPrayers ? '▾' : '▸'}</span>
+            <span>Ver oraciones completas</span>
+          </button>
+          {showPrayers && (
+            <div style={{ marginTop: '0.75rem' }}>
+              {Object.keys(prayers).map(function(key) {
+                var val = prayers[key]
+                if (!val) return null
+                var label = PRAYER_LABELS[key] || key
+                var vernacular = typeof val === 'string' ? val : val.vernacular
+                var latin = typeof val === 'object' ? val.latin : null
+                return (
+                  <div key={key} style={{ marginBottom: '0.9rem', paddingBottom: '0.9rem', borderBottom: '1px solid #ede5d4' }}>
+                    <p style={prayerSectionHeader}>{label}</p>
+                    {vernacular && <p style={prayerBodyText}>{vernacular}</p>}
+                    {latin && <p style={prayerLatinText}>{latin}</p>}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function ViewHoy({ tier, onSwitchView }) {
@@ -413,25 +645,7 @@ function ViewHoy({ tier, onSwitchView }) {
           <div style={s.cardTitle}>Rosario del Día</div>
           <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.rosario ? '▾' : '▸'}</span>
         </div>
-        {open.rosario && (
-          <div>
-            <p style={{ fontSize: '0.85rem', color: colors.verde, fontWeight: 'bold', marginBottom: '0.75rem' }}>
-              {ROSARY_NAMES[weekday]}
-            </p>
-            {rosary && rosary.mysteries && Array.isArray(rosary.mysteries) ? (
-              rosary.mysteries.map(function(m, i) {
-                return (
-                  <div key={i} style={{ marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8rem', color: colors.vino, fontWeight: 'bold' }}>{i + 1}. </span>
-                    <span style={s.p}>{typeof m === 'string' ? m : (m.title || m.name || '')}</span>
-                  </div>
-                )
-              })
-            ) : (
-              <Proximamente />
-            )}
-          </div>
-        )}
+        {open.rosario && (rosary ? <RosarioContent rosary={rosary} weekday={weekday} /> : <Proximamente />)}
       </div>
 
       {/* F) Coronilla */}
@@ -443,11 +657,7 @@ function ViewHoy({ tier, onSwitchView }) {
           <div style={s.cardTitle}>Coronilla de la Divina Misericordia</div>
           <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.coronilla ? '▾' : '▸'}</span>
         </div>
-        {open.coronilla && (
-          chaplet && chaplet.content
-            ? <p style={s.p}>{typeof chaplet.content === 'string' ? chaplet.content : JSON.stringify(chaplet.content)}</p>
-            : <Proximamente />
-        )}
+        {open.coronilla && (chaplet ? <CoronillaContent chaplet={chaplet} /> : <Proximamente />)}
       </div>
 
       {/* G) Links Via Claraval */}
