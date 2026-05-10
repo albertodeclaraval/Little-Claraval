@@ -1,20 +1,7 @@
-var CACHE_NAME = 'little-claraval-v1'
-var urlsToCache = ['/', '/login']
+var CACHE_NAME = 'little-claraval-v2'
 
 self.addEventListener('install', function(event) {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(function(cache) {
-      return cache.addAll(urlsToCache)
-    })
-  )
-})
-
-self.addEventListener('fetch', function(event) {
-  event.respondWith(
-    caches.match(event.request).then(function(response) {
-      return response || fetch(event.request)
-    })
-  )
+  self.skipWaiting()
 })
 
 self.addEventListener('activate', function(event) {
@@ -24,6 +11,32 @@ self.addEventListener('activate', function(event) {
         names.filter(function(name) { return name !== CACHE_NAME })
           .map(function(name) { return caches.delete(name) })
       )
-    })
+    }).then(function() { return self.clients.claim() })
   )
+})
+
+self.addEventListener('fetch', function(event) {
+  var url = new URL(event.request.url)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(function() {
+        return caches.match('/') || new Response('Offline', { status: 503 })
+      })
+    )
+    return
+  }
+  if (url.pathname.match(/\.(js|css|png|jpg|svg|ico|woff2?)$/)) {
+    event.respondWith(
+      caches.match(event.request).then(function(cached) {
+        return cached || fetch(event.request).then(function(response) {
+          return caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(event.request, response.clone())
+            return response
+          })
+        })
+      })
+    )
+    return
+  }
+  event.respondWith(fetch(event.request))
 })

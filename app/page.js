@@ -912,12 +912,26 @@ function App() {
     supabase.auth.getSession().then(function(res) {
       if (res.data.session) {
         setUser(res.data.session.user)
-        supabase.from('profiles').select('*').eq('id', res.data.session.user.id).single().then(function(p) { if (p.data) setProfile(p.data) })
+        supabase.from('profiles').select('*').eq('id', res.data.session.user.id).single().then(function(p) {
+          if (p.data) setProfile(p.data)
+          setChecking(false)
+        }).catch(function() { setChecking(false) })
       } else {
         window.location.href = '/login'
       }
-      setChecking(false)
     })
+
+    var { data: { subscription } } = supabase.auth.onAuthStateChange(function(event, session) {
+      if (event === 'SIGNED_OUT') {
+        window.location.href = '/login'
+      }
+      if (event === 'TOKEN_REFRESHED' && session) {
+        setUser(session.user)
+        supabase.from('profiles').select('*').eq('id', session.user.id).single().then(function(p) { if (p.data) setProfile(p.data) })
+      }
+    })
+
+    return function() { subscription.unsubscribe() }
   }, [])
 
   var tier = getEffectiveTier(profile)
