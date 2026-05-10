@@ -388,9 +388,9 @@ function ViewHoy({ tier, onSwitchView }) {
       fetchLiturgicalDay(today),
       fetchSaint(monthDay),
       fetchReflection(dateStr, 'es'),
-      fetchLiturgyHour('laudes', null, null, null, 'es'),
-      fetchLiturgyHour('visperas', null, null, null, 'es'),
-      fetchLiturgyHour('completas', null, null, null, 'es'),
+      fetchLiturgyHour('lauds', 1, weekday, 'ordinary', 'es'),
+      fetchLiturgyHour('vespers', 1, weekday, 'ordinary', 'es'),
+      fetchLiturgyHour('compline', 1, weekday, 'ordinary', 'es'),
       fetchRosary(weekday, 'es'),
       fetchChaplet('es'),
       fetchAppLinks(),
@@ -611,7 +611,7 @@ function ViewHoy({ tier, onSwitchView }) {
           highlight={hour >= 5 && hour < 12}
         >
           {lh.laudes && lh.laudes.content
-            ? <p style={s.p}>{typeof lh.laudes.content === 'string' ? lh.laudes.content : JSON.stringify(lh.laudes.content)}</p>
+            ? <LiturgiaContent data={lh.laudes} />
             : <Proximamente />}
         </Accordion>
         <Accordion
@@ -621,7 +621,7 @@ function ViewHoy({ tier, onSwitchView }) {
           highlight={hour >= 12 && hour < 20}
         >
           {lh.visperas && lh.visperas.content
-            ? <p style={s.p}>{typeof lh.visperas.content === 'string' ? lh.visperas.content : JSON.stringify(lh.visperas.content)}</p>
+            ? <LiturgiaContent data={lh.visperas} />
             : <Proximamente />}
         </Accordion>
         <Accordion
@@ -631,7 +631,7 @@ function ViewHoy({ tier, onSwitchView }) {
           highlight={hour >= 20 || hour < 5}
         >
           {lh.completas && lh.completas.content
-            ? <p style={s.p}>{typeof lh.completas.content === 'string' ? lh.completas.content : JSON.stringify(lh.completas.content)}</p>
+            ? <LiturgiaContent data={lh.completas} />
             : <Proximamente />}
         </Accordion>
       </div>
@@ -801,6 +801,99 @@ function ViewRedeem({ user }) {
         <input type="text" value={code} onChange={function(e) { setCode(e.target.value.toUpperCase()) }} placeholder="CODIGO" style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '6px', fontSize: '1.1rem', textAlign: 'center', letterSpacing: '0.2em', fontFamily: 'Georgia, serif', boxSizing: 'border-box', color: colors.texto }} />
         <button style={s.btn(colors.vino)} onClick={handleRedeem} disabled={ld}>{ld ? 'Canjeando...' : 'Canjear'}</button>
         {msg && <div style={{ marginTop: '1rem', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem', backgroundColor: msg.includes('Error') ? '#fee2e2' : '#dcfce7', color: msg.includes('Error') ? '#991b1b' : '#166534' }}>{msg}</div>}
+      </div>
+    </div>
+  )
+}
+
+function LiturgiaContent({ data }) {
+  var c = data.content
+  if (!c || typeof c === 'string') return <p style={s.p}>{c || ''}</p>
+  var stl = {
+    section: { marginBottom: '1.25rem' },
+    label: { fontSize: '0.7rem', color: colors.oro, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 'bold' },
+    verse: { fontStyle: 'italic', marginBottom: '0.25rem', fontSize: '0.92rem', lineHeight: '1.5' },
+    response: { fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.92rem', lineHeight: '1.5' },
+    stanza: { marginBottom: '0.6rem', fontSize: '0.92rem', lineHeight: '1.6', whiteSpace: 'pre-line' },
+    antiphon: { fontStyle: 'italic', color: colors.vino, fontSize: '0.88rem', marginBottom: '0.5rem', padding: '0.4rem 0.6rem', backgroundColor: 'rgba(114,47,55,0.05)', borderRadius: '4px', borderLeft: '3px solid ' + colors.vino },
+    psalmRef: { fontSize: '0.8rem', color: '#888', marginBottom: '0.15rem' },
+    psalmTitle: { fontSize: '0.88rem', fontWeight: 'bold', color: colors.vino, marginBottom: '0.6rem' },
+    rubric: { fontSize: '0.82rem', color: '#999', fontStyle: 'italic', marginBottom: '0.75rem' },
+    hymn: { whiteSpace: 'pre-line', fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '0.75rem' },
+    prayer: { fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '0.75rem' },
+    divider: { borderTop: '1px solid #e8dcc8', margin: '1rem 0' }
+  }
+  return (
+    <div>
+      <div style={stl.section}>
+        <div style={stl.label}>Invocación inicial</div>
+        <div style={stl.verse}>V. {c.opening.v}</div>
+        <div style={stl.response}>R. {c.opening.r}</div>
+        <div style={stl.stanza}>{c.opening.gloria}</div>
+      </div>
+      <div style={stl.divider} />
+      <div style={stl.section}>
+        <div style={stl.rubric}>{c.exam}</div>
+      </div>
+      <div style={stl.divider} />
+      <div style={stl.section}>
+        <div style={stl.label}>Himno</div>
+        <div style={stl.hymn}>{c.hymn}</div>
+      </div>
+      <div style={stl.divider} />
+      <div style={stl.section}>
+        <div style={stl.label}>Salmodia</div>
+        {c.psalms.map(function(ps, i) {
+          return (
+            <div key={i} style={{ marginBottom: i < c.psalms.length - 1 ? '1.5rem' : 0 }}>
+              <div style={stl.antiphon}>Ant. {ps.antiphon}</div>
+              <div style={stl.psalmRef}>{ps.ref}</div>
+              <div style={stl.psalmTitle}>{ps.title}</div>
+              {ps.stanzas.map(function(st, j) {
+                return <div key={j} style={stl.stanza}>{st}</div>
+              })}
+              <div style={stl.antiphon}>Ant. {ps.antiphon}</div>
+            </div>
+          )
+        })}
+      </div>
+      <div style={stl.divider} />
+      <div style={stl.section}>
+        <div style={stl.label}>Lectura breve</div>
+        <div style={stl.psalmRef}>{c.reading.ref}</div>
+        <div style={stl.prayer}>{c.reading.text}</div>
+      </div>
+      <div style={stl.divider} />
+      <div style={stl.section}>
+        <div style={stl.label}>Responsorio breve</div>
+        <div style={stl.verse}>V. {c.responsory.v}</div>
+        <div style={stl.response}>R. {c.responsory.r}</div>
+      </div>
+      <div style={stl.divider} />
+      <div style={stl.section}>
+        <div style={stl.label}>{c.nunc_dimittis.title}</div>
+        <div style={stl.psalmRef}>{c.nunc_dimittis.ref}</div>
+        <div style={stl.antiphon}>Ant. {c.nunc_dimittis.antiphon}</div>
+        {c.nunc_dimittis.stanzas.map(function(st, j) {
+          return <div key={j} style={stl.stanza}>{st}</div>
+        })}
+        <div style={stl.antiphon}>Ant. {c.nunc_dimittis.antiphon}</div>
+      </div>
+      <div style={stl.divider} />
+      <div style={stl.section}>
+        <div style={stl.label}>Oración</div>
+        <div style={stl.prayer}>{c.prayer}</div>
+        <div style={stl.response}>R. Amén.</div>
+      </div>
+      <div style={stl.divider} />
+      <div style={stl.section}>
+        <div style={stl.verse}>V. {c.blessing}</div>
+        <div style={stl.response}>R. Amén.</div>
+      </div>
+      <div style={stl.divider} />
+      <div style={stl.section}>
+        <div style={stl.label}>{c.marian_antiphon.title}</div>
+        <div style={stl.hymn}>{c.marian_antiphon.text}</div>
       </div>
     </div>
   )

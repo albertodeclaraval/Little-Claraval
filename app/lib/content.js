@@ -20,12 +20,21 @@ export async function fetchReflection(date, lang) {
   return data
 }
 
-export async function fetchLiturgyHour(hourType, psalterWeek, weekday, season, lang) {
+export async function fetchLiturgyHour(hourType, psalterWeek, weekday, seasonVariant, lang) {
   var query = supabase
     .from('liturgy_hours')
     .select('*')
     .eq('hour_type', hourType)
     .eq('lang', lang || 'es')
+  if (weekday !== null && weekday !== undefined) {
+    query = query.eq('weekday', weekday)
+  }
+  if (psalterWeek) {
+    query = query.eq('psalter_week', psalterWeek)
+  }
+  if (seasonVariant) {
+    query = query.eq('season_variant', seasonVariant)
+  }
   var { data } = await query.limit(1)
   return data && data.length > 0 ? data[0] : null
 }
