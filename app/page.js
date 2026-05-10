@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import ComingSoon from './page.comingsoon'
+import { fetchDailyReadings, fetchLiturgicalDay } from './lib/liturgical-api'
+import { fetchSaint, fetchReflection, fetchLiturgyHour, fetchRosary, fetchChaplet, fetchAppLinks } from './lib/content'
 
 var supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -55,39 +57,387 @@ function getEffectiveTier(profile) {
   return (TIER_LEVELS[paid] || 0) >= (TIER_LEVELS[gift] || 0) ? paid : gift
 }
 
-function ViewHoy({ tier }) {
-  var can = (TIER_LEVELS[tier] || 0) >= 1
+var SEASON_COLORS = {
+  easter: colors.oro, pascua: colors.oro,
+  christmas: colors.oro, navidad: colors.oro,
+  advent: '#7B5EA7', adviento: '#7B5EA7',
+  lent: '#7B5EA7', cuaresma: '#7B5EA7',
+  ordinary: colors.verde
+}
+
+var SEASON_ES = {
+  easter: 'Tiempo de Pascua', christmas: 'Navidad',
+  advent: 'Adviento', lent: 'Cuaresma',
+  'ordinary time': 'Tiempo Ordinario', ordinary: 'Tiempo Ordinario',
+  pentecost: 'Pentecostés'
+}
+
+var ROSARY_NAMES = {
+  0: 'Misterios Gloriosos', 1: 'Misterios Gozosos',
+  2: 'Misterios Dolorosos', 3: 'Misterios Gloriosos',
+  4: 'Misterios Luminosos', 5: 'Misterios Dolorosos',
+  6: 'Misterios Gozosos'
+}
+
+function getSeasonColor(season) {
+  if (!season) return colors.verde
+  var s = season.toLowerCase()
+  for (var key in SEASON_COLORS) {
+    if (s.includes(key)) return SEASON_COLORS[key]
+  }
+  return colors.verde
+}
+
+function getSeasonEs(season) {
+  if (!season) return 'Tiempo Ordinario'
+  var s = season.toLowerCase()
+  for (var key in SEASON_ES) {
+    if (s.includes(key)) return SEASON_ES[key]
+  }
+  return season
+}
+
+function Accordion({ title, isOpen, onToggle, highlight, children }) {
+  return (
+    <div style={{ marginBottom: '0.25rem' }}>
+      <div
+        onClick={onToggle}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0', cursor: 'pointer', borderBottom: isOpen ? 'none' : '1px solid #f0e8d8' }}
+      >
+        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: highlight ? colors.vino : colors.texto }}>
+          {title}
+        </span>
+        <span style={{ color: colors.vino, fontSize: '0.85rem', flexShrink: 0, marginLeft: '0.5rem' }}>
+          {isOpen ? '▾' : '▸'}
+        </span>
+      </div>
+      {isOpen && <div style={{ paddingTop: '0.75rem', paddingBottom: '0.75rem' }}>{children}</div>}
+    </div>
+  )
+}
+
+function Proximamente() {
+  return <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Próximamente</p>
+}
+
+function ViewHoy({ tier, onSwitchView }) {
+  var canReflection = (TIER_LEVELS[tier] || 0) >= 1
+
+  var today = new Date()
+  var year = today.getFullYear()
+  var mo = String(today.getMonth() + 1).padStart(2, '0')
+  var dy = String(today.getDate()).padStart(2, '0')
+  var dateStr = year + '-' + mo + '-' + dy
+  var monthDay = mo + '-' + dy
+  var weekday = today.getDay()
+  var hour = today.getHours()
+
+  var [readings, setReadings] = useState(null)
+  var [litDay, setLitDay] = useState(null)
+  var [saint, setSaint] = useState(null)
+  var [reflection, setReflection] = useState(null)
+  var [lh, setLh] = useState({ laudes: null, visperas: null, completas: null })
+  var [rosary, setRosary] = useState(null)
+  var [chaplet, setChaplet] = useState(null)
+  var [appLinks, setAppLinks] = useState([])
+  var [loading, setLoading] = useState(true)
+  var [open, setOpen] = useState({
+    laudes: hour >= 5 && hour < 12,
+    visperas: hour >= 12 && hour < 20,
+    completas: hour >= 20 || hour < 5,
+    rosario: false,
+    coronilla: false
+  })
+
+  useEffect(function() {
+    Promise.all([
+      fetchDailyReadings(today),
+      fetchLiturgicalDay(today),
+      fetchSaint(monthDay),
+      fetchReflection(dateStr, 'es'),
+      fetchLiturgyHour('laudes', null, null, null, 'es'),
+      fetchLiturgyHour('visperas', null, null, null, 'es'),
+      fetchLiturgyHour('completas', null, null, null, 'es'),
+      fetchRosary(weekday, 'es'),
+      fetchChaplet('es'),
+      fetchAppLinks()
+    ]).then(function(r) {
+      setReadings(r[0])
+      setLitDay(r[1])
+      setSaint(r[2])
+      setReflection(r[3])
+      setLh({ laudes: r[4], visperas: r[5], completas: r[6] })
+      setRosary(r[7])
+      setChaplet(r[8])
+      setAppLinks(r[9] || [])
+      setLoading(false)
+    })
+  }, [])
+
+  function toggle(key) {
+    setOpen(function(prev) { return Object.assign({}, prev, { [key]: !prev[key] }) })
+  }
+
+  var season = (readings && readings.season) || (litDay && litDay.season) || ''
+  var seasonColor = getSeasonColor(season)
+  var seasonEs = getSeasonEs(season)
+  var celebration = litDay && litDay.celebration
+  var rd = readings && readings.readings
+
+  if (loading) {
+    return <div style={Object.assign({}, s.content, { textAlign: 'center', color: '#aaa', paddingTop: '3rem' })}>Cargando...</div>
+  }
+
   return (
     <div style={s.content}>
+
+      {/* Encabezado litúrgico */}
       <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <div style={s.badge(colors.verde)}>Tiempo Ordinario</div>
+        <div style={s.badge(seasonColor)}>{seasonEs}</div>
+        {celebration && celebration.type && (
+          <div style={{ fontSize: '0.72rem', color: '#999', marginTop: '0.35rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {celebration.type}
+          </div>
+        )}
       </div>
-      <div style={s.card}>
-        <div style={s.cardTitle}>Evangelio del dia</div>
-        <h2 style={s.h1}>Mateo 10, 7-13</h2>
-        <p style={s.p}>Yendo, proclamad: El Reino de los Cielos esta cerca. Curad enfermos, resucitad muertos, purificad leprosos, expulsad demonios. Gratis lo recibisteis, dadlo gratis.</p>
-      </div>
-      <div style={s.card}>
-        <div style={s.cardTitle}>Reflexion - Alberto De Claraval</div>
-        {can ? (
-          <p style={s.p}>Jesus no manda a predicar con palabras vacias. Manda a predicar con obras que cuestan. Gratis recibiste la misericordia, gratis, es decir, sin merecerla. Ahora sal y dala.</p>
+
+      {/* A) Lecturas del día */}
+      <div style={Object.assign({}, s.card, { borderLeft: '3px solid ' + seasonColor })}>
+        <div style={s.cardTitle}>Lecturas del Día</div>
+        {!rd ? (
+          <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>
+            No se pudieron cargar las lecturas. Verifica tu conexión.
+          </p>
         ) : (
           <>
-            <div style={Object.assign({}, s.badge(colors.vino), { fontSize: '0.7rem' })}>PREMIUM - Nivel Peregrino</div>
-            <p style={Object.assign({}, s.p, { filter: 'blur(4px)', userSelect: 'none' })}>Jesus no manda a predicar con palabras vacias. Manda a predicar con obras que cuestan.</p>
-            <button style={s.btn(colors.vino)}>Desbloquear - $1.99/mes</button>
+            {rd.firstReading && (
+              <div className="reading-block">
+                <div className="reading-label">Primera Lectura</div>
+                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: 0 }}>{rd.firstReading}</p>
+              </div>
+            )}
+            {rd.psalm && (
+              <div className="reading-block">
+                <div className="reading-label">Salmo</div>
+                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: 0 }}>{rd.psalm}</p>
+              </div>
+            )}
+            {rd.secondReading && (
+              <div className="reading-block">
+                <div className="reading-label">Segunda Lectura</div>
+                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: 0 }}>{rd.secondReading}</p>
+              </div>
+            )}
+            {rd.gospel && (
+              <div className="reading-block" style={{ borderBottom: 'none', marginBottom: 0 }}>
+                <div className="reading-label">Evangelio</div>
+                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.vino, margin: 0 }}>{rd.gospel}</p>
+              </div>
+            )}
+            {readings.usccbLink && (
+              <a
+                href={readings.usccbLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'inline-block', marginTop: '1rem', fontSize: '0.8rem', color: colors.azul, textDecoration: 'none' }}
+              >
+                Leer texto completo en USCCB →
+              </a>
+            )}
           </>
         )}
       </div>
+
+      {/* B) Reflexión */}
       <div style={s.card}>
-        <div style={s.cardTitle}>Santo del dia</div>
-        <h2 style={Object.assign({}, s.h1, { fontSize: '1.1rem' })}>San Augusto Chapdelaine</h2>
-        <p style={s.p}>Martir misionero en China. Testimonio de que el Evangelio vale mas que la propia vida.</p>
+        <div style={s.cardTitle}>Reflexión — Alberto de Claraval</div>
+        {!reflection ? (
+          <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Reflexión en preparación...</p>
+        ) : canReflection ? (
+          <div>
+            {reflection.content && reflection.content.silencio && (
+              <p style={Object.assign({}, s.p, { fontStyle: 'italic', color: '#777', marginBottom: '1rem' })}>
+                {reflection.content.silencio}
+              </p>
+            )}
+            {reflection.content && reflection.content.frase && (
+              <p style={Object.assign({}, s.p, { fontWeight: 'bold', marginBottom: '1rem' })}>
+                «{reflection.content.frase}»
+              </p>
+            )}
+            {reflection.content && reflection.content.pregunta && (
+              <p style={Object.assign({}, s.p, { color: colors.verde, marginBottom: '1rem' })}>
+                {reflection.content.pregunta}
+              </p>
+            )}
+            {reflection.content && reflection.content.oracion && (
+              <p style={Object.assign({}, s.p, { fontStyle: 'italic' })}>
+                {reflection.content.oracion}
+              </p>
+            )}
+            {reflection.gospel_reference && (
+              <p style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.75rem' }}>
+                {reflection.gospel_reference}
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <div style={Object.assign({}, s.badge(colors.vino), { fontSize: '0.7rem', marginBottom: '0.75rem' })}>
+              PREMIUM — Nivel Peregrino
+            </div>
+            <p style={Object.assign({}, s.p, { filter: 'blur(4px)', userSelect: 'none' })}>
+              El silencio es el umbral de la contemplación. En él, Dios habla al corazón sin palabras.
+              Detente un momento antes de comenzar el día y deja que la Palabra resuene en ti.
+            </p>
+            <button style={Object.assign({}, s.btn(colors.vino), { marginTop: '1rem' })} onClick={function() { onSwitchView && onSwitchView('precios') }}>
+              Desbloquear — $1.99/mes
+            </button>
+          </>
+        )}
       </div>
+
+      {/* C) Santo del día */}
       <div style={s.card}>
-        <div style={s.cardTitle}>Laudes</div>
-        <p style={s.p}>Oh Dios, que abres el dia con tu luz, abre tambien mi corazon a tu presencia. Amen.</p>
+        <div style={s.cardTitle}>Santo del Día</div>
+        {!celebration && !saint ? (
+          <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Información no disponible</p>
+        ) : (
+          <>
+            <h2 style={Object.assign({}, s.h1, { fontSize: '1.1rem', marginBottom: '0.4rem' })}>
+              {saint ? (saint.name_es || (celebration && celebration.name)) : (celebration && celebration.name)}
+            </h2>
+            {celebration && celebration.type && (
+              <div style={{ fontSize: '0.72rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                {celebration.type}
+              </div>
+            )}
+            {saint && saint.bio_es ? (
+              <p style={s.p}>{saint.bio_es}</p>
+            ) : celebration && celebration.description ? (
+              <p style={s.p}>{celebration.description}</p>
+            ) : null}
+            {saint && saint.patronage_es && (
+              <p style={Object.assign({}, s.p, { fontStyle: 'italic', color: '#777', marginTop: '0.5rem', fontSize: '0.85rem' })}>
+                Patrono/a de: {saint.patronage_es}
+              </p>
+            )}
+            {saint && saint.prayer_es && (
+              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e8dcc8' }}>
+                <div style={{ fontSize: '0.68rem', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>Oración</div>
+                <p style={Object.assign({}, s.p, { fontStyle: 'italic' })}>{saint.prayer_es}</p>
+              </div>
+            )}
+          </>
+        )}
       </div>
+
+      {/* D) Liturgia de las Horas */}
+      <div style={s.card}>
+        <div style={s.cardTitle}>Liturgia de las Horas</div>
+        <Accordion
+          title={'Laudes' + (hour >= 5 && hour < 12 ? ' · Oración de la mañana' : '')}
+          isOpen={open.laudes}
+          onToggle={function() { toggle('laudes') }}
+          highlight={hour >= 5 && hour < 12}
+        >
+          {lh.laudes && lh.laudes.content
+            ? <p style={s.p}>{typeof lh.laudes.content === 'string' ? lh.laudes.content : JSON.stringify(lh.laudes.content)}</p>
+            : <Proximamente />}
+        </Accordion>
+        <Accordion
+          title={'Vísperas' + (hour >= 12 && hour < 20 ? ' · Oración de la tarde' : '')}
+          isOpen={open.visperas}
+          onToggle={function() { toggle('visperas') }}
+          highlight={hour >= 12 && hour < 20}
+        >
+          {lh.visperas && lh.visperas.content
+            ? <p style={s.p}>{typeof lh.visperas.content === 'string' ? lh.visperas.content : JSON.stringify(lh.visperas.content)}</p>
+            : <Proximamente />}
+        </Accordion>
+        <Accordion
+          title={'Completas' + ((hour >= 20 || hour < 5) ? ' · Oración de la noche' : '')}
+          isOpen={open.completas}
+          onToggle={function() { toggle('completas') }}
+          highlight={hour >= 20 || hour < 5}
+        >
+          {lh.completas && lh.completas.content
+            ? <p style={s.p}>{typeof lh.completas.content === 'string' ? lh.completas.content : JSON.stringify(lh.completas.content)}</p>
+            : <Proximamente />}
+        </Accordion>
+      </div>
+
+      {/* E) Rosario */}
+      <div style={s.card}>
+        <div
+          onClick={function() { toggle('rosario') }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.rosario ? '0.75rem' : 0 }}
+        >
+          <div style={s.cardTitle}>Rosario del Día</div>
+          <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.rosario ? '▾' : '▸'}</span>
+        </div>
+        {open.rosario && (
+          <div>
+            <p style={{ fontSize: '0.85rem', color: colors.verde, fontWeight: 'bold', marginBottom: '0.75rem' }}>
+              {ROSARY_NAMES[weekday]}
+            </p>
+            {rosary && rosary.mysteries && Array.isArray(rosary.mysteries) ? (
+              rosary.mysteries.map(function(m, i) {
+                return (
+                  <div key={i} style={{ marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: colors.vino, fontWeight: 'bold' }}>{i + 1}. </span>
+                    <span style={s.p}>{typeof m === 'string' ? m : (m.title || m.name || '')}</span>
+                  </div>
+                )
+              })
+            ) : (
+              <Proximamente />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* F) Coronilla */}
+      <div style={s.card}>
+        <div
+          onClick={function() { toggle('coronilla') }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.coronilla ? '0.75rem' : 0 }}
+        >
+          <div style={s.cardTitle}>Coronilla de la Divina Misericordia</div>
+          <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.coronilla ? '▾' : '▸'}</span>
+        </div>
+        {open.coronilla && (
+          chaplet && chaplet.content
+            ? <p style={s.p}>{typeof chaplet.content === 'string' ? chaplet.content : JSON.stringify(chaplet.content)}</p>
+            : <Proximamente />
+        )}
+      </div>
+
+      {/* G) Links Via Claraval */}
+      {appLinks.length > 0 && (
+        <div style={{ textAlign: 'center', paddingTop: '1.25rem', borderTop: '1px solid #e8dcc8', marginTop: '0.5rem' }}>
+          <p style={{ fontSize: '0.68rem', color: '#bbb', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '0.85rem' }}>
+            Via Claraval
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+            {appLinks.map(function(link) {
+              return (
+                <a
+                  key={link.slug}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: colors.vino, textDecoration: 'none', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                >
+                  {link.icon && <span>{link.icon}</span>}
+                  <span>{link.label_es || link.label_en}</span>
+                </a>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
@@ -266,7 +616,7 @@ function App() {
       <nav style={s.nav}>
         {tabs.map(function(t) { return <button key={t.id} style={s.navBtn(vista === t.id)} onClick={function() { setVista(t.id); setJournalAbierto(null) }}>{t.label}</button> })}
       </nav>
-      {vista === 'hoy' && <ViewHoy tier={tier} />}
+      {vista === 'hoy' && <ViewHoy tier={tier} onSwitchView={setVista} />}
       {vista === 'diarios' && !journalAbierto && <ViewDiarios onOpen={function(j, d) { setJournalAbierto(j); setJournalDay(d) }} tier={tier} user={user} />}
       {vista === 'diarios' && journalAbierto && <ViewJournal journal={journalAbierto} dayNumber={journalDay} onBack={function() { setJournalAbierto(null) }} user={user} />}
       {vista === 'precios' && <ViewPricing onCheckout={handleCheckout} loading={loading} tier={tier} />}
