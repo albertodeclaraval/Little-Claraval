@@ -19,7 +19,9 @@ function parseCSVLine(line) {
 }
 
 function parseCSV(text) {
-  var lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
+  var lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  text = lines.replace(/^﻿/, '')
+  lines = text.split('\n')
   var headers = parseCSVLine(lines[0]).map(function(h) { return h.trim() })
   var rows = []
   for (var i = 1; i < lines.length; i++) {
