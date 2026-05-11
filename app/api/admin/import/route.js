@@ -165,7 +165,7 @@ export async function POST(request) {
     var body = await request.json()
     var { sheetId, tabName } = body
     if (!sheetId || !tabName) return Response.json({ error: 'Faltan sheetId o tabName' }, { status: 400 })
-    var url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(tabName)
+    var url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(tabName) + '&headers=1'
     var csvRes = await fetch(url)
     if (!csvRes.ok) return Response.json({ error: 'No se pudo leer el Sheet. Verifica que este publicado.' }, { status: 400 })
     var csvText = await csvRes.text()
