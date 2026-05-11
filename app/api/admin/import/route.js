@@ -51,6 +51,7 @@ async function importSantos(rows) {
       tags: r.tags ? r.tags.split(',').map(function(t) { return t.trim() }) : []
     }
   })
+  if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
   var { data, error } = await supabaseAdmin.from('saints').upsert(mapped, { onConflict: 'month_day' })
   return { count: mapped.length, error: error ? error.message : null }
 }
@@ -60,9 +61,12 @@ async function importLecturas(rows) {
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i]
     if (!r.date) continue
+    var dateObj = new Date(r.date + 'T12:00:00Z')
+    var weekday = dateObj.getUTCDay()
     var { data: ld, error: ldErr } = await supabaseAdmin.from('liturgical_days').upsert({
       date: r.date, season: r.season || null, liturgical_color: r.liturgical_color || null,
-      title_es: r.title_es || null, celebration: r.celebration || null
+      title_es: r.title_es || null, celebration: r.celebration || null,
+      weekday: weekday
     }, { onConflict: 'date' }).select().single()
     if (ldErr) { errors.push('liturgical_days ' + r.date + ': ' + ldErr.message); continue }
     var { error: rdErr } = await supabaseAdmin.from('readings').upsert({
@@ -118,18 +122,23 @@ async function importLiturgia(rows, hourType) {
 }
 
 async function importJournals(rows) {
-  var mapped = rows.filter(function(r) { return r.journal_slug && r.day_number }).map(function(r) {
+  var mapped = rows.filter(function(r) {
+    return r.journal_slug && r.day_number && !isNaN(parseInt(r.day_number))
+  }).map(function(r) {
     return {
       journal_slug: r.journal_slug, day_number: parseInt(r.day_number),
       lang: r.lang || 'es', title: r.title || null, content: r.content || null
     }
   })
+  if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
   var { error } = await supabaseAdmin.from('journal_content').upsert(mapped, { onConflict: 'journal_slug,day_number,lang' })
   return { count: mapped.length, error: error ? error.message : null }
 }
 
 async function importBuenasNoches(rows) {
-  var mapped = rows.filter(function(r) { return r.liturgical_period && r.story_number }).map(function(r) {
+  var mapped = rows.filter(function(r) {
+    return r.liturgical_period && r.story_number && !isNaN(parseInt(r.story_number))
+  }).map(function(r) {
     return {
       liturgical_period: r.liturgical_period, cycle: r.cycle || 'A',
       story_number: parseInt(r.story_number), lang: r.lang || 'es',
@@ -137,6 +146,7 @@ async function importBuenasNoches(rows) {
       gospel_reference: r.gospel_reference || null, volume_slug: r.volume_slug || null
     }
   })
+  if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
   var { error } = await supabaseAdmin.from('bedtime_stories').upsert(mapped, { onConflict: 'liturgical_period,cycle,story_number,lang' })
   return { count: mapped.length, error: error ? error.message : null }
 }
@@ -155,10 +165,10 @@ export async function POST(request) {
     if (!sheetId || !tabName) return Response.json({ error: 'Faltan sheetId o tabName' }, { status: 400 })
     var url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(tabName)
     var csvRes = await fetch(url)
-    if (!csvRes.ok) return Response.json({ error: 'No se pudo leer el Sheet. Verifica que esté publicado.' }, { status: 400 })
+    if (!csvRes.ok) return Response.json({ error: 'No se pudo leer el Sheet. Verifica que este publicado.' }, { status: 400 })
     var csvText = await csvRes.text()
     var rows = parseCSV(csvText)
-    if (rows.length === 0) return Response.json({ error: 'El sheet está vacío o no tiene datos' }, { status: 400 })
+    if (rows.length === 0) return Response.json({ error: 'El sheet esta vacio o no tiene datos' }, { status: 400 })
     var result
     if (tabName === 'santos') result = await importSantos(rows)
     else if (tabName === 'lecturas') result = await importLecturas(rows)
