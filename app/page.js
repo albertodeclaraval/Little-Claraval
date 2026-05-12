@@ -524,24 +524,24 @@ function ViewHoy({ tier, onSwitchView }) {
           <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Reflexión en preparación...</p>
         ) : canReflection ? (
           <div>
-            {reflection.content && reflection.content.silencio && (
+            {reflection.content && reflection.content.silence && (
               <p style={Object.assign({}, s.p, { fontStyle: 'italic', color: '#777', marginBottom: '1rem' })}>
-                {reflection.content.silencio}
+                {reflection.content.silence}
               </p>
             )}
-            {reflection.content && reflection.content.frase && (
+            {reflection.content && reflection.content.meditative_phrase && (
               <p style={Object.assign({}, s.p, { fontWeight: 'bold', marginBottom: '1rem' })}>
-                «{reflection.content.frase}»
+                «{reflection.content.meditative_phrase}»
               </p>
             )}
-            {reflection.content && reflection.content.pregunta && (
+            {reflection.content && reflection.content.inner_question && (
               <p style={Object.assign({}, s.p, { color: colors.verde, marginBottom: '1rem' })}>
-                {reflection.content.pregunta}
+                {reflection.content.inner_question}
               </p>
             )}
-            {reflection.content && reflection.content.oracion && (
+            {reflection.content && reflection.content.brief_prayer && (
               <p style={Object.assign({}, s.p, { fontStyle: 'italic' })}>
-                {reflection.content.oracion}
+                {reflection.content.brief_prayer}
               </p>
             )}
             {reflection.gospel_reference && (
@@ -720,25 +720,45 @@ function ViewDiarios({ onOpen, tier, user }) {
 
 function ViewJournal({ journal, dayNumber, onBack, user }) {
   var [text, setText] = useState(''); var [saving, setSaving] = useState(false); var [saved, setSaved] = useState(false); var [loading, setLoading] = useState(true)
+  var [journalContent, setJournalContent] = useState(null)
+  var [currentDay, setCurrentDay] = useState(dayNumber)
+  useEffect(function() {
+    supabase.from('journal_content').select('title, content').eq('journal_slug', journal.slug).eq('day_number', currentDay).eq('lang', 'es').single().then(function(r) {
+      if (r.data) setJournalContent(r.data)
+      else setJournalContent(null)
+    })
+  }, [journal.slug, currentDay])
   useEffect(function() {
     if (!user) return
-    supabase.from('journal_entries').select('content').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('day_number', dayNumber).single().then(function(r) { if (r.data) setText(r.data.content || ''); setLoading(false) })
-  }, [user, journal.slug, dayNumber])
+    supabase.from('journal_entries').select('content').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('day_number', currentDay).single().then(function(r) { if (r.data) setText(r.data.content || ''); setLoading(false) })
+  }, [user, journal.slug, currentDay])
   async function handleSave() {
     if (!user) return; setSaving(true)
-    var ex = await supabase.from('journal_entries').select('id').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('day_number', dayNumber).single()
+    var ex = await supabase.from('journal_entries').select('id').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('day_number', currentDay).single()
     if (ex.data) { await supabase.from('journal_entries').update({ content: text, updated_at: new Date().toISOString() }).eq('id', ex.data.id) }
-    else { await supabase.from('journal_entries').insert({ user_id: user.id, journal_slug: journal.slug, day_number: dayNumber, content: text }) }
+    else { await supabase.from('journal_entries').insert({ user_id: user.id, journal_slug: journal.slug, day_number: currentDay, content: text }) }
     setSaving(false); setSaved(true); setTimeout(function() { setSaved(false) }, 2000)
   }
   return (
     <div style={s.content}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', color: colors.vino, cursor: 'pointer', marginBottom: '1rem', fontSize: '0.9rem' }}>Volver</button>
       <div style={s.card}>
-        <div style={s.cardTitle}>{journal.title} - Dia {dayNumber}</div>
-        <p style={Object.assign({}, s.p, { fontStyle: 'italic', color: colors.verde, marginBottom: '1rem' })}>Examiname, oh Dios, y conoce mi corazon. - Sal 139, 23</p>
+        <div style={s.cardTitle}>
+          {journal.title} - Día {currentDay}
+          {journalContent && journalContent.title && <div style={{ fontSize: '0.85rem', color: '#888', marginTop: '0.25rem' }}>{journalContent.title}</div>}
+        </div>
+        {journalContent && journalContent.content && (
+          <div style={{ marginBottom: '1rem', whiteSpace: 'pre-wrap', lineHeight: 1.8, fontSize: '0.95rem', color: '#444' }}>
+            {journalContent.content}
+          </div>
+        )}
         {loading ? <p style={{ color: '#888' }}>Cargando...</p> : (
           <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <button onClick={function() { if (currentDay > 1) setCurrentDay(currentDay - 1) }} disabled={currentDay <= 1} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem 0.8rem', cursor: currentDay > 1 ? 'pointer' : 'default', color: currentDay > 1 ? '#782F40' : '#ccc', fontSize: '0.85rem' }}>← Anterior</button>
+              <span style={{ fontSize: '0.85rem', color: '#888' }}>Día {currentDay} / 120</span>
+              <button onClick={function() { if (currentDay < 120) setCurrentDay(currentDay + 1) }} disabled={currentDay >= 120} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem 0.8rem', cursor: currentDay < 120 ? 'pointer' : 'default', color: currentDay < 120 ? '#782F40' : '#ccc', fontSize: '0.85rem' }}>Siguiente →</button>
+            </div>
             <textarea style={s.textarea} value={text} onChange={function(e) { setText(e.target.value) }} placeholder="Escribe aqui..." />
             <button style={s.btn(saved ? colors.verde : colors.vino)} onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : saved ? 'Guardado!' : 'Guardar entrada'}</button>
           </>
