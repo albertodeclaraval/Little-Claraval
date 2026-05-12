@@ -722,17 +722,28 @@ function ViewJournal({ journal, dayNumber, onBack, user }) {
   var [text, setText] = useState(''); var [saving, setSaving] = useState(false); var [saved, setSaved] = useState(false); var [loading, setLoading] = useState(true)
   var [journalContent, setJournalContent] = useState(null)
   var [currentDay, setCurrentDay] = useState(dayNumber)
+  var [metadata, setMetadata] = useState(null)
+  var [showDesc, setShowDesc] = useState(true)
+
+  useEffect(function() {
+    supabase.from('journal_metadata').select('description, opening_prayer, closing_prayer').eq('journal_slug', journal.slug).eq('lang', 'es').maybeSingle().then(function(r) {
+      setMetadata(r.data || null)
+    })
+  }, [journal.slug])
+
   useEffect(function() {
     supabase.from('journal_content').select('title, content').eq('journal_slug', journal.slug).eq('day_number', currentDay).eq('lang', 'es').single().then(function(r) {
       if (r.data) setJournalContent(r.data)
       else setJournalContent(null)
     })
   }, [journal.slug, currentDay])
+
   useEffect(function() {
     if (!user) return
     setText(''); setSaved(false)
     supabase.from('journal_entries').select('content').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('day_number', currentDay).single().then(function(r) { if (r.data && r.data.content) setText(r.data.content); else setText(''); setLoading(false) })
   }, [user, journal.slug, currentDay])
+
   async function handleSave() {
     if (!user) return; setSaving(true)
     var ex = await supabase.from('journal_entries').select('id').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('day_number', currentDay).single()
@@ -740,9 +751,22 @@ function ViewJournal({ journal, dayNumber, onBack, user }) {
     else { await supabase.from('journal_entries').insert({ user_id: user.id, journal_slug: journal.slug, day_number: currentDay, content: text }) }
     setSaving(false); setSaved(true); setTimeout(function() { setSaved(false) }, 2000)
   }
+
   return (
     <div style={s.content}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', color: colors.vino, cursor: 'pointer', marginBottom: '1rem', fontSize: '0.9rem' }}>Volver</button>
+
+      {metadata && metadata.description && showDesc && (
+        <div style={{ backgroundColor: '#fdf8f0', border: '1px solid #e8dcc8', borderRadius: '8px', padding: '1.25rem 1.25rem 1rem', marginBottom: '1rem', position: 'relative' }}>
+          <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.92rem', color: '#555', margin: 0 }}>{metadata.description}</p>
+          <button onClick={function() { setShowDesc(false) }} style={{ position: 'absolute', top: '0.6rem', right: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '0.85rem' }}>✕</button>
+        </div>
+      )}
+
+      {metadata && metadata.description && !showDesc && (
+        <button onClick={function() { setShowDesc(true) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '0.8rem', marginBottom: '0.75rem', padding: 0 }}>ℹ️ Sobre este diario</button>
+      )}
+
       <div style={s.card}>
         <div style={s.cardTitle}>
           {journal.title} - Día {currentDay}
@@ -760,8 +784,18 @@ function ViewJournal({ journal, dayNumber, onBack, user }) {
               <span style={{ fontSize: '0.85rem', color: '#888' }}>Día {currentDay} / 120</span>
               <button onClick={function() { if (currentDay < 120) setCurrentDay(currentDay + 1) }} disabled={currentDay >= 120} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem 0.8rem', cursor: currentDay < 120 ? 'pointer' : 'default', color: currentDay < 120 ? '#782F40' : '#ccc', fontSize: '0.85rem' }}>Siguiente →</button>
             </div>
-            <textarea style={s.textarea} value={text} onChange={function(e) { setText(e.target.value) }} placeholder="Escribe aqui..." />
+            {metadata && metadata.opening_prayer && (
+              <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f0e8d8' }}>
+                <span style={{ color: colors.vino, marginRight: '0.4rem' }}>✠</span>{metadata.opening_prayer}
+              </p>
+            )}
+            <textarea key={`${journal.slug}-${currentDay}`} style={s.textarea} value={text} onChange={function(e) { setText(e.target.value) }} placeholder="Escribe aqui..." />
             <button style={s.btn(saved ? colors.verde : colors.vino)} onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : saved ? 'Guardado!' : 'Guardar entrada'}</button>
+            {metadata && metadata.closing_prayer && (
+              <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f0e8d8' }}>
+                <span style={{ color: colors.vino, marginRight: '0.4rem' }}>✠</span>{metadata.closing_prayer}
+              </p>
+            )}
           </>
         )}
       </div>
