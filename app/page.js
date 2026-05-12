@@ -730,7 +730,8 @@ function ViewJournal({ journal, dayNumber, onBack, user }) {
   }, [journal.slug, currentDay])
   useEffect(function() {
     if (!user) return
-    supabase.from('journal_entries').select('content').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('day_number', currentDay).single().then(function(r) { if (r.data) setText(r.data.content || ''); setLoading(false) })
+    setText(''); setSaved(false)
+    supabase.from('journal_entries').select('content').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('day_number', currentDay).single().then(function(r) { if (r.data && r.data.content) setText(r.data.content); else setText(''); setLoading(false) })
   }, [user, journal.slug, currentDay])
   async function handleSave() {
     if (!user) return; setSaving(true)
