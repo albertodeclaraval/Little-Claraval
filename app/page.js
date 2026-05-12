@@ -692,12 +692,18 @@ function ViewHoy({ tier, onSwitchView }) {
 function ViewDiarios({ onOpen, tier, user }) {
   var limit = tier === 'claraval' ? 999 : tier === 'discipulo' ? 3 : tier === 'peregrino' ? 1 : 0
   var [progress, setProgress] = useState({})
+  var [journalMetas, setJournalMetas] = useState({})
   useEffect(function() {
     if (!user) return
     supabase.from('journal_entries').select('journal_slug, day_number').eq('user_id', user.id).then(function(r) {
       if (r.data) { var p = {}; r.data.forEach(function(e) { if (!p[e.journal_slug] || e.day_number > p[e.journal_slug]) p[e.journal_slug] = e.day_number }); setProgress(p) }
     })
   }, [user])
+  useEffect(function() {
+    supabase.from('journal_metadata').select('journal_slug, description').eq('lang', 'es').then(function(r) {
+      if (r.data) { var m = {}; r.data.forEach(function(row) { m[row.journal_slug] = row }); setJournalMetas(m) }
+    })
+  }, [])
   return (
     <div style={s.content}>
       <h2 style={Object.assign({}, s.h1, { marginBottom: '0.25rem' })}>Mis Diarios</h2>
@@ -705,10 +711,13 @@ function ViewDiarios({ onOpen, tier, user }) {
       <div style={s.journalGrid}>
         {journals.map(function(j, i) {
           var locked = i >= limit; var day = progress[j.slug] || 0; var pct = Math.round((day / 120) * 100)
+          var meta = journalMetas[j.slug]
+          var desc = meta && meta.description ? (meta.description.length > 80 ? meta.description.slice(0, 80) + '...' : meta.description) : null
           return (
             <div key={j.slug} style={Object.assign({}, s.journalCard, { opacity: locked ? 0.5 : 1, cursor: locked ? 'default' : 'pointer' })} onClick={function() { if (!locked) onOpen(j, day + 1) }}>
               <div style={{ fontSize: '0.7rem', color: colors.oro, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.35rem' }}>{locked ? 'Bloqueado' : 'Dia ' + (day + 1) + ' / 120'}</div>
               <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: colors.texto }}>{j.title}</div>
+              {desc && <p style={{ fontSize: '0.78rem', color: '#888', lineHeight: 1.4, marginTop: '0.3rem', marginBottom: 0 }}>{desc}</p>}
               {!locked && <div style={{ height: '4px', backgroundColor: '#f0e8d8', borderRadius: '2px', marginTop: '0.75rem' }}><div style={{ height: '4px', width: pct + '%', backgroundColor: colors.oro, borderRadius: '2px' }} /></div>}
             </div>
           )
