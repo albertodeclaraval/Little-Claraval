@@ -765,14 +765,14 @@ function ViewJournal({ journal, dayNumber, onBack, user }) {
     <div style={s.content}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', color: colors.vino, cursor: 'pointer', marginBottom: '1rem', fontSize: '0.9rem' }}>Volver</button>
 
-      {metadata && metadata.description && showDesc && (
+      {metadata && metadata.description && showDesc && currentDay === 1 && (
         <div style={{ backgroundColor: '#fdf8f0', border: '1px solid #e8dcc8', borderRadius: '8px', padding: '1.25rem 1.25rem 1rem', marginBottom: '1rem', position: 'relative' }}>
           <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.92rem', color: '#555', margin: 0 }}>{metadata.description}</p>
           <button onClick={function() { setShowDesc(false) }} style={{ position: 'absolute', top: '0.6rem', right: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '0.85rem' }}>✕</button>
         </div>
       )}
 
-      {metadata && metadata.description && !showDesc && (
+      {metadata && metadata.description && !showDesc && currentDay === 1 && (
         <button onClick={function() { setShowDesc(true) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '0.8rem', marginBottom: '0.75rem', padding: 0 }}>ℹ️ Sobre este diario</button>
       )}
 
