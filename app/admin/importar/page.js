@@ -12,7 +12,7 @@ var TABS = [
   { name: 'reflexiones', label: 'Reflexiones', desc: 'date, lang, silence, meditative_phrase...', icon: '✝️' },
   { name: 'laudes', label: 'Laudes', desc: 'psalter_week, weekday, lang, content_json', icon: '🌅' },
   { name: 'visperas', label: 'Vísperas', desc: 'psalter_week, weekday, lang, content_json', icon: '🌇' },
-  { name: 'journals', label: 'Journals', desc: 'journal_slug, day_number, lang, title, content', icon: '📓' },
+  { name: 'journals', label: 'Journals', desc: 'journal_slug, day_number, week_number, lang, title, content, question_number, section_type', icon: '📓' },
   { name: 'buenas_noches', label: 'Buenas Noches Jesús', desc: 'liturgical_period, cycle, story_number, lang...', icon: '🌙' }
 ]
 

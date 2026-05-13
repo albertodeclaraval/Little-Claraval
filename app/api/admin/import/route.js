@@ -125,15 +125,21 @@ async function importLiturgia(rows, hourType) {
 
 async function importJournals(rows) {
   var mapped = rows.filter(function(r) {
-    return r.journal_slug && r.day_number && !isNaN(parseInt(r.day_number))
+    return r.journal_slug
   }).map(function(r) {
     return {
-      journal_slug: r.journal_slug, day_number: parseInt(r.day_number),
-      lang: r.lang || 'es', title: r.title || null, content: r.content || null
+      journal_slug: r.journal_slug,
+      day_number: r.day_number ? parseInt(r.day_number) : null,
+      week_number: r.week_number ? parseInt(r.week_number) : null,
+      lang: r.lang || 'es',
+      title: r.title || null,
+      content: r.content || null,
+      question_number: r.question_number ? parseInt(r.question_number) : null,
+      section_type: r.section_type || null
     }
   })
   if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
-  var { error } = await supabaseAdmin.from('journal_content').upsert(mapped, { onConflict: 'journal_slug,day_number,lang' })
+  var { error } = await supabaseAdmin.from('journal_content').upsert(mapped, { onConflict: 'journal_slug,day_number,week_number,lang,question_number' })
   return { count: mapped.length, error: error ? error.message : null }
 }
 

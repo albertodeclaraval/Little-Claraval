@@ -36,16 +36,16 @@ var s = {
   pricingCard: function(h) { return { backgroundColor: h ? colors.vino : 'white', borderRadius: '8px', padding: '1.5rem', marginBottom: '1rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', color: h ? 'white' : colors.texto } },
 }
 
-var journals = [
-  { slug: 'examen', title: 'Examen del Dia' },
-  { slug: 'paz', title: 'Paz Verdadera' },
-  { slug: 'fortaleza', title: 'Fortaleza' },
-  { slug: 'fiat', title: 'Fiat' },
-  { slug: 'verbum', title: 'Verbum' },
-  { slug: 'magnificat', title: 'Magnificat' },
-  { slug: 'confiteor', title: 'Confiteor' },
-  { slug: 'lumen', title: 'Lumen' },
-  { slug: 'miles', title: 'Miles Christi' },
+var JOURNALS = [
+  { slug: 'examen', title: 'Examen del Dia', titleEn: 'Daily Examen', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'paz', title: 'Paz Verdadera', titleEn: 'True Peace', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'fortaleza', title: 'Fortaleza', titleEn: 'Fortitude', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'fiat', title: 'Fiat', titleEn: 'Fiat', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'verbum', title: 'Verbum', titleEn: 'Verbum', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'magnificat', title: 'Magnificat', titleEn: 'Magnificat', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'confiteor', title: 'Confiteor', titleEn: 'Confiteor', type: 'weekly', total: 52, questionsPerUnit: 3 },
+  { slug: 'lumen', title: 'Lumen', titleEn: 'Lumen', type: 'weekly', total: 52, questionsPerUnit: 3, hasPatronSaint: true },
+  { slug: 'miles', title: 'Miles Christi', titleEn: 'Miles Christi', type: 'daily', total: 90, questionsPerUnit: 6 },
 ]
 
 var TIER_LEVELS = { free: 0, peregrino: 1, discipulo: 2, claraval: 3 }
@@ -695,8 +695,15 @@ function ViewDiarios({ onOpen, tier, user }) {
   var [journalMetas, setJournalMetas] = useState({})
   useEffect(function() {
     if (!user) return
-    supabase.from('journal_entries').select('journal_slug, day_number').eq('user_id', user.id).then(function(r) {
-      if (r.data) { var p = {}; r.data.forEach(function(e) { if (!p[e.journal_slug] || e.day_number > p[e.journal_slug]) p[e.journal_slug] = e.day_number }); setProgress(p) }
+    supabase.from('journal_entries').select('journal_slug, day_number, week_number').eq('user_id', user.id).then(function(r) {
+      if (r.data) {
+        var p = {}
+        r.data.forEach(function(e) {
+          var unit = e.week_number != null ? e.week_number : (e.day_number || 0)
+          if (!p[e.journal_slug] || unit > p[e.journal_slug]) p[e.journal_slug] = unit
+        })
+        setProgress(p)
+      }
     })
   }, [user])
   useEffect(function() {
@@ -707,15 +714,18 @@ function ViewDiarios({ onOpen, tier, user }) {
   return (
     <div style={s.content}>
       <h2 style={Object.assign({}, s.h1, { marginBottom: '0.25rem' })}>Mis Diarios</h2>
-      <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '1.5rem' }}>120 dias de encuentro diario con Dios</p>
+      <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Diarios de oración y examen</p>
       <div style={s.journalGrid}>
-        {journals.map(function(j, i) {
-          var locked = i >= limit; var day = progress[j.slug] || 0; var pct = Math.round((day / 120) * 100)
+        {JOURNALS.map(function(j, i) {
+          var locked = i >= limit
+          var unit = progress[j.slug] || 0
+          var pct = Math.round((unit / j.total) * 100)
+          var unitLabel = j.type === 'weekly' ? 'Semana' : 'Día'
           var meta = journalMetas[j.slug]
           var desc = meta && meta.description ? (meta.description.length > 80 ? meta.description.slice(0, 80) + '...' : meta.description) : null
           return (
-            <div key={j.slug} style={Object.assign({}, s.journalCard, { opacity: locked ? 0.5 : 1, cursor: locked ? 'default' : 'pointer' })} onClick={function() { if (!locked) onOpen(j, day + 1) }}>
-              <div style={{ fontSize: '0.7rem', color: colors.oro, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.35rem' }}>{locked ? 'Bloqueado' : 'Dia ' + (day + 1) + ' / 120'}</div>
+            <div key={j.slug} style={Object.assign({}, s.journalCard, { opacity: locked ? 0.5 : 1, cursor: locked ? 'default' : 'pointer' })} onClick={function() { if (!locked) onOpen(j, unit + 1) }}>
+              <div style={{ fontSize: '0.7rem', color: colors.oro, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.35rem' }}>{locked ? 'Bloqueado' : unitLabel + ' ' + (unit + 1) + ' / ' + j.total}</div>
               <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: colors.texto }}>{j.title}</div>
               {desc && <p style={{ fontSize: '0.78rem', color: '#888', lineHeight: 1.4, marginTop: '0.3rem', marginBottom: 0 }}>{desc}</p>}
               {!locked && <div style={{ height: '4px', backgroundColor: '#f0e8d8', borderRadius: '2px', marginTop: '0.75rem' }}><div style={{ height: '4px', width: pct + '%', backgroundColor: colors.oro, borderRadius: '2px' }} /></div>}
@@ -727,12 +737,17 @@ function ViewDiarios({ onOpen, tier, user }) {
   )
 }
 
-function ViewJournal({ journal, dayNumber, onBack, user }) {
-  var [text, setText] = useState(''); var [saving, setSaving] = useState(false); var [saved, setSaved] = useState(false); var [loading, setLoading] = useState(true)
-  var [journalContent, setJournalContent] = useState(null)
-  var [currentDay, setCurrentDay] = useState(dayNumber)
+function ViewJournal({ journal, initialUnit, onBack, user }) {
+  var isWeekly = journal.type === 'weekly'
+  var [currentUnit, setCurrentUnit] = useState(initialUnit)
+  var [answers, setAnswers] = useState({})
+  var [saving, setSaving] = useState(false)
+  var [saved, setSaved] = useState(false)
+  var [loading, setLoading] = useState(true)
+  var [questions, setQuestions] = useState([])
   var [metadata, setMetadata] = useState(null)
   var [showDesc, setShowDesc] = useState(true)
+  var [patronSaint, setPatronSaint] = useState(null)
 
   useEffect(function() {
     supabase.from('journal_metadata').select('description, opening_prayer, closing_prayer').eq('journal_slug', journal.slug).eq('lang', 'es').maybeSingle().then(function(r) {
@@ -741,64 +756,111 @@ function ViewJournal({ journal, dayNumber, onBack, user }) {
   }, [journal.slug])
 
   useEffect(function() {
-    supabase.from('journal_content').select('title, content').eq('journal_slug', journal.slug).eq('day_number', currentDay).eq('lang', 'es').single().then(function(r) {
-      if (r.data) setJournalContent(r.data)
-      else setJournalContent(null)
+    if (!journal.hasPatronSaint) return
+    supabase.from('journal_content').select('title, content').eq('journal_slug', journal.slug).eq('section_type', 'patron_saint').eq('lang', 'es').maybeSingle().then(function(r) {
+      setPatronSaint(r.data || null)
     })
-  }, [journal.slug, currentDay])
+  }, [journal.slug])
 
   useEffect(function() {
     if (!user) return
-    setText(''); setSaved(false)
-    supabase.from('journal_entries').select('content').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('day_number', currentDay).single().then(function(r) { if (r.data && r.data.content) setText(r.data.content); else setText(''); setLoading(false) })
-  }, [user, journal.slug, currentDay])
+    setLoading(true)
+    setAnswers({})
+    setSaved(false)
+    var qQuery = supabase.from('journal_content').select('title, content, question_number').eq('journal_slug', journal.slug).eq('lang', 'es').order('question_number')
+    if (isWeekly) qQuery = qQuery.eq('week_number', currentUnit)
+    else qQuery = qQuery.eq('day_number', currentUnit)
+    var eQuery = supabase.from('journal_entries').select('question_number, content').eq('user_id', user.id).eq('journal_slug', journal.slug).order('question_number')
+    if (isWeekly) eQuery = eQuery.eq('week_number', currentUnit)
+    else eQuery = eQuery.eq('day_number', currentUnit)
+    Promise.all([qQuery, eQuery]).then(function(results) {
+      setQuestions(results[0].data || [])
+      var a = {}
+      if (results[1].data) results[1].data.forEach(function(e) { a[e.question_number || 1] = e.content || '' })
+      setAnswers(a)
+      setLoading(false)
+    })
+  }, [user, journal.slug, journal.type, currentUnit])
 
   async function handleSave() {
-    if (!user) return; setSaving(true)
-    var ex = await supabase.from('journal_entries').select('id').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('day_number', currentDay).single()
-    if (ex.data) { await supabase.from('journal_entries').update({ content: text, updated_at: new Date().toISOString() }).eq('id', ex.data.id) }
-    else { await supabase.from('journal_entries').insert({ user_id: user.id, journal_slug: journal.slug, day_number: currentDay, content: text }) }
+    if (!user) return
+    setSaving(true)
+    var saveList = questions.length > 0 ? questions : [{ question_number: 1 }]
+    var ops = saveList.map(async function(q) {
+      var qn = q.question_number || 1
+      var content = answers[qn] || ''
+      var filterQ = supabase.from('journal_entries').select('id').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('question_number', qn)
+      if (isWeekly) filterQ = filterQ.eq('week_number', currentUnit)
+      else filterQ = filterQ.eq('day_number', currentUnit)
+      var ex = await filterQ.maybeSingle()
+      if (ex.data) {
+        await supabase.from('journal_entries').update({ content: content, updated_at: new Date().toISOString() }).eq('id', ex.data.id)
+      } else {
+        var record = { user_id: user.id, journal_slug: journal.slug, question_number: qn, content: content }
+        if (isWeekly) record.week_number = currentUnit
+        else record.day_number = currentUnit
+        await supabase.from('journal_entries').insert(record)
+      }
+    })
+    await Promise.all(ops)
     setSaving(false); setSaved(true); setTimeout(function() { setSaved(false) }, 2000)
   }
+
+  var unitLabel = isWeekly ? 'Semana' : 'Día'
+  var displayQuestions = questions.length > 0 ? questions : [{ question_number: 1, title: null, content: null }]
 
   return (
     <div style={s.content}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', color: colors.vino, cursor: 'pointer', marginBottom: '1rem', fontSize: '0.9rem' }}>Volver</button>
 
-      {metadata && metadata.description && showDesc && currentDay === 1 && (
+      {metadata && metadata.description && showDesc && currentUnit === 1 && (
         <div style={{ backgroundColor: '#fdf8f0', border: '1px solid #e8dcc8', borderRadius: '8px', padding: '1.25rem 1.25rem 1rem', marginBottom: '1rem', position: 'relative' }}>
           <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.92rem', color: '#555', margin: 0 }}>{metadata.description}</p>
           <button onClick={function() { setShowDesc(false) }} style={{ position: 'absolute', top: '0.6rem', right: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '0.85rem' }}>✕</button>
         </div>
       )}
 
-      {metadata && metadata.description && !showDesc && currentDay === 1 && (
+      {metadata && metadata.description && !showDesc && currentUnit === 1 && (
         <button onClick={function() { setShowDesc(true) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '0.8rem', marginBottom: '0.75rem', padding: 0 }}>ℹ️ Sobre este diario</button>
       )}
 
-      <div style={s.card}>
-        <div style={s.cardTitle}>
-          {journal.title} - Día {currentDay}
-          {journalContent && journalContent.title && <div style={{ fontSize: '0.85rem', color: '#888', marginTop: '0.25rem' }}>{journalContent.title}</div>}
+      {journal.hasPatronSaint && patronSaint && currentUnit === 1 && (
+        <div style={{ backgroundColor: '#fdf8f0', border: '1px solid #e8dcc8', borderRadius: '8px', padding: '1.25rem', marginBottom: '1rem' }}>
+          {patronSaint.title && <p style={{ fontWeight: 'bold', fontSize: '0.88rem', color: colors.vino, margin: '0 0 0.5rem' }}>{patronSaint.title}</p>}
+          {patronSaint.content && <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', margin: 0 }}>{patronSaint.content}</p>}
         </div>
-        {journalContent && journalContent.content && (
-          <div style={{ marginBottom: '1rem', whiteSpace: 'pre-wrap', lineHeight: 1.8, fontSize: '0.95rem', color: '#444' }}>
-            {journalContent.content}
-          </div>
-        )}
+      )}
+
+      <div style={s.card}>
+        <div style={s.cardTitle}>{journal.title} - {unitLabel} {currentUnit}</div>
         {loading ? <p style={{ color: '#888' }}>Cargando...</p> : (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <button onClick={function() { if (currentDay > 1) setCurrentDay(currentDay - 1) }} disabled={currentDay <= 1} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem 0.8rem', cursor: currentDay > 1 ? 'pointer' : 'default', color: currentDay > 1 ? '#782F40' : '#ccc', fontSize: '0.85rem' }}>← Anterior</button>
-              <span style={{ fontSize: '0.85rem', color: '#888' }}>Día {currentDay} / 120</span>
-              <button onClick={function() { if (currentDay < 120) setCurrentDay(currentDay + 1) }} disabled={currentDay >= 120} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem 0.8rem', cursor: currentDay < 120 ? 'pointer' : 'default', color: currentDay < 120 ? '#782F40' : '#ccc', fontSize: '0.85rem' }}>Siguiente →</button>
+              <button onClick={function() { if (currentUnit > 1) setCurrentUnit(currentUnit - 1) }} disabled={currentUnit <= 1} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem 0.8rem', cursor: currentUnit > 1 ? 'pointer' : 'default', color: currentUnit > 1 ? '#782F40' : '#ccc', fontSize: '0.85rem' }}>← Anterior</button>
+              <span style={{ fontSize: '0.85rem', color: '#888' }}>{unitLabel} {currentUnit} / {journal.total}</span>
+              <button onClick={function() { if (currentUnit < journal.total) setCurrentUnit(currentUnit + 1) }} disabled={currentUnit >= journal.total} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem 0.8rem', cursor: currentUnit < journal.total ? 'pointer' : 'default', color: currentUnit < journal.total ? '#782F40' : '#ccc', fontSize: '0.85rem' }}>Siguiente →</button>
             </div>
             {metadata && metadata.opening_prayer && (
               <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f0e8d8' }}>
                 <span style={{ color: colors.vino, marginRight: '0.4rem' }}>✠</span>{metadata.opening_prayer}
               </p>
             )}
-            <textarea key={`${journal.slug}-${currentDay}`} style={s.textarea} value={text} onChange={function(e) { setText(e.target.value) }} placeholder="Escribe aqui..." />
+            {displayQuestions.map(function(q, i) {
+              var qn = q.question_number || 1
+              var isLast = i === displayQuestions.length - 1
+              return (
+                <div key={qn} style={{ borderBottom: isLast ? 'none' : '1px solid #f0e8d8', paddingBottom: isLast ? 0 : '1rem', marginBottom: isLast ? 0 : '1rem' }}>
+                  {q.title && <p style={{ fontWeight: 'bold', fontSize: '0.9rem', color: colors.vino, margin: '0 0 0.5rem' }}>{q.title}</p>}
+                  {q.content && <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, fontSize: '0.95rem', color: '#444', margin: '0 0 0.5rem' }}>{q.content}</p>}
+                  <textarea
+                    style={s.textarea}
+                    value={answers[qn] || ''}
+                    onChange={function(e) { var val = e.target.value; setAnswers(function(prev) { return Object.assign({}, prev, { [qn]: val }) }) }}
+                    placeholder="Escribe aqui..."
+                  />
+                </div>
+              )
+            })}
             <button style={s.btn(saved ? colors.verde : colors.vino)} onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : saved ? 'Guardado!' : 'Guardar entrada'}</button>
             {metadata && metadata.closing_prayer && (
               <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f0e8d8' }}>
@@ -966,7 +1028,7 @@ function LiturgiaContent({ data }) {
 function App() {
   var [vista, setVista] = useState('hoy')
   var [journalAbierto, setJournalAbierto] = useState(null)
-  var [journalDay, setJournalDay] = useState(1)
+  var [journalUnit, setJournalUnit] = useState(1)
   var [user, setUser] = useState(null)
   var [profile, setProfile] = useState(null)
   var [loading, setLoading] = useState(false)
@@ -1035,8 +1097,8 @@ function App() {
         {tabs.map(function(t) { return <button key={t.id} style={s.navBtn(vista === t.id)} onClick={function() { setVista(t.id); setJournalAbierto(null) }}>{t.label}</button> })}
       </nav>
       {vista === 'hoy' && <ViewHoy tier={tier} onSwitchView={setVista} />}
-      {vista === 'diarios' && !journalAbierto && <ViewDiarios onOpen={function(j, d) { setJournalAbierto(j); setJournalDay(d) }} tier={tier} user={user} />}
-      {vista === 'diarios' && journalAbierto && <ViewJournal journal={journalAbierto} dayNumber={journalDay} onBack={function() { setJournalAbierto(null) }} user={user} />}
+      {vista === 'diarios' && !journalAbierto && <ViewDiarios onOpen={function(j, u) { setJournalAbierto(j); setJournalUnit(u) }} tier={tier} user={user} />}
+      {vista === 'diarios' && journalAbierto && <ViewJournal journal={journalAbierto} initialUnit={journalUnit} onBack={function() { setJournalAbierto(null) }} user={user} />}
       {vista === 'precios' && <ViewPricing onCheckout={handleCheckout} loading={loading} tier={tier} />}
       {vista === 'canjear' && <ViewRedeem user={user} />}
     </div>
