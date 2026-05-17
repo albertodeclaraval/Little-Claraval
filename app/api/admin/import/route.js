@@ -19,9 +19,7 @@ function parseCSVLine(line) {
 }
 
 function parseCSV(text) {
-  var lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  text = lines.replace(/^﻿/, '')
-  lines = text.split('\n')
+  var lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
   var headers = parseCSVLine(lines[0]).map(function(h) { return h.trim() })
   var rows = []
   for (var i = 1; i < lines.length; i++) {
@@ -29,7 +27,11 @@ function parseCSV(text) {
     var values = parseCSVLine(lines[i])
     var row = {}
     for (var j = 0; j < headers.length; j++) {
-      row[headers[j]] = values[j] !== undefined ? values[j].trim() : ''
+      var h = headers[j]
+      if (!h) continue
+      var v = values[j] !== undefined ? values[j].trim() : ''
+      // Duplicate header: keep first non-empty value (e.g. reflexiones has two feast_key columns)
+      if (!(h in row) || (row[h] === '' && v !== '')) row[h] = v
     }
     rows.push(row)
   }
@@ -37,121 +39,174 @@ function parseCSV(text) {
 }
 
 function toIntOrNull(v) { var n = parseInt(v); return isNaN(n) ? null : n }
+function toNumOrDefault(v, def) { var n = parseFloat(v); return isNaN(n) ? def : n }
+function clean(v) { return (v && v.trim()) ? v.trim() : null }
 
+// santos → saints (upsert on month_day)
+// Excel cols: month_day, name_es, name_en, bio_es, bio_en, patronage_es, patronage_en,
+//             birth_year, death_year, canonization_year, canonized_by,
+//             feast_day_es, feast_day_en, prayer_es, prayer_en, rank, tags
 async function importSantos(rows) {
   var mapped = rows.filter(function(r) { return r.month_day }).map(function(r) {
     return {
       month_day: r.month_day,
-      name_es: r.name_es || null, name_en: r.name_en || null,
-      bio_es: r.bio_es || null, bio_en: r.bio_en || null,
-      patronage_es: r.patronage_es || null, patronage_en: r.patronage_en || null,
+      name_es: clean(r.name_es), name_en: clean(r.name_en),
+      bio_es: clean(r.bio_es), bio_en: clean(r.bio_en),
+      patronage_es: clean(r.patronage_es), patronage_en: clean(r.patronage_en),
       birth_year: toIntOrNull(r.birth_year), death_year: toIntOrNull(r.death_year),
-      canonization_year: toIntOrNull(r.canonization_year), canonized_by: r.canonized_by || null,
-      feast_day_es: r.feast_day_es || null, feast_day_en: r.feast_day_en || null,
-      prayer_es: r.prayer_es || null, prayer_en: r.prayer_en || null,
-      rank: r.rank || 'memorial',
+      canonization_year: toIntOrNull(r.canonization_year), canonized_by: clean(r.canonized_by),
+      feast_day_es: clean(r.feast_day_es), feast_day_en: clean(r.feast_day_en),
+      prayer_es: clean(r.prayer_es), prayer_en: clean(r.prayer_en),
+      rank: (clean(r.rank) || 'memorial').toLowerCase().replace(/ /g, '_'),
       tags: r.tags ? r.tags.split(',').map(function(t) { return t.trim() }) : []
     }
   })
   if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
-  var { data, error } = await supabaseAdmin.from('saints').upsert(mapped, { onConflict: 'month_day' })
+  var { error } = await supabaseAdmin.from('saints').upsert(mapped, { onConflict: 'month_day' })
   return { count: mapped.length, error: error ? error.message : null }
 }
 
+// lecturas → lectionary (upsert on cycle,season,week,weekday,feast_key,lang)
+// Excel cols: cycle, season, week, weekday, feast_key, lang, title, liturgical_color,
+//             first_reading_ref, first_reading_text, psalm_ref, psalm_text,
+//             second_reading_ref, second_reading_text, gospel_ref, gospel_text
 async function importLecturas(rows) {
-  var count = 0, errors = []
-  for (var i = 0; i < rows.length; i++) {
-    var r = rows[i]
-    if (!r.date) continue
-    var dateObj = new Date(r.date + 'T12:00:00Z')
-    var weekday = dateObj.getUTCDay()
-    var { data: ld, error: ldErr } = await supabaseAdmin.from('liturgical_days').upsert({
-      date: r.date, season: r.season || null, liturgical_color: r.liturgical_color || null,
-      title_es: r.title_es || null, celebration: r.celebration || null,
-      weekday: weekday
-    }, { onConflict: 'date' }).select().single()
-    if (ldErr) { errors.push('liturgical_days ' + r.date + ': ' + ldErr.message); continue }
-    var { error: rdErr } = await supabaseAdmin.from('readings').upsert({
-      date: r.date, liturgical_day_id: ld.id,
-      first_reading_ref: r.first_reading_ref || null, first_reading_ref_es: r.first_reading_ref_es || null,
-      first_reading_text_es: r.first_reading_text_es || null, first_reading_text_en: r.first_reading_text_en || null,
-      psalm_ref: r.psalm_ref || null, psalm_ref_es: r.psalm_ref_es || null,
-      psalm_text_es: r.psalm_text_es || null, psalm_text_en: r.psalm_text_en || null,
-      second_reading_ref: r.second_reading_ref || null, second_reading_ref_es: r.second_reading_ref_es || null,
-      second_reading_text_es: r.second_reading_text_es || null, second_reading_text_en: r.second_reading_text_en || null,
-      gospel_ref: r.gospel_ref || null, gospel_ref_es: r.gospel_ref_es || null,
-      gospel_text_es: r.gospel_text_es || null, gospel_text_en: r.gospel_text_en || null
-    }, { onConflict: 'date' })
-    if (rdErr) { errors.push('readings ' + r.date + ': ' + rdErr.message) }
-    else { count++ }
-  }
-  return { count: count, error: errors.length > 0 ? errors.join('; ') : null }
-}
-
-async function importReflexiones(rows) {
-  var mapped = rows.filter(function(r) { return r.date && r.lang }).map(function(r) {
-    return {
-      date: r.date, lang: r.lang, gospel_reference: r.gospel_reference || null,
-      content: {
-        silence: r.silence || '', meditative_phrase: r.meditative_phrase || '',
-        inner_question: r.inner_question || '', brief_prayer: r.brief_prayer || ''
-      },
-      spiritual_school: r.spiritual_school || 'bernardina',
-      theme: r.theme || null,
-      tags: r.tags ? r.tags.split(',').map(function(t) { return t.trim() }) : [],
-      status: 'published', published_at: new Date().toISOString()
-    }
-  })
-  var { error } = await supabaseAdmin.from('reflections').upsert(mapped, { onConflict: 'date,lang' })
-  return { count: mapped.length, error: error ? error.message : null }
-}
-
-async function importLiturgia(rows, hourType) {
-  var mapped = rows.filter(function(r) { return r.content_json }).map(function(r) {
-    var content
-    try { content = JSON.parse(r.content_json) } catch(e) { return null }
-    return {
-      hour_type: hourType,
-      psalter_week: toIntOrNull(r.psalter_week) || 1,
-      weekday: toIntOrNull(r.weekday),
-      season_variant: r.season_variant || 'ordinary',
-      lang: r.lang || 'es',
-      content: content
-    }
-  }).filter(function(r) { return r !== null })
-  var { error } = await supabaseAdmin.from('liturgy_hours').upsert(mapped, { onConflict: 'hour_type,psalter_week,weekday,season_variant,lang' })
-  return { count: mapped.length, error: error ? error.message : null }
-}
-
-async function importJournals(rows) {
+  var BATCH = 200, total = 0, errors = []
   var mapped = rows.filter(function(r) {
-    return r.journal_slug
+    return r.cycle && r.season && r.lang
   }).map(function(r) {
     return {
-      journal_slug: r.journal_slug,
-      day_number: r.day_number ? parseInt(r.day_number) : null,
-      week_number: r.week_number ? parseInt(r.week_number) : null,
-      lang: r.lang || 'es',
-      title: r.title || null,
-      content: r.content || null,
-      question_number: r.question_number ? parseInt(r.question_number) : null,
-      section_type: r.section_type || null
+      cycle: r.cycle, season: r.season,
+      week: toNumOrDefault(r.week, 0), weekday: toNumOrDefault(r.weekday, 0),
+      feast_key: clean(r.feast_key) || '', lang: r.lang,
+      title: clean(r.title), liturgical_color: clean(r.liturgical_color),
+      first_reading_ref: clean(r.first_reading_ref), first_reading_text: clean(r.first_reading_text),
+      psalm_ref: clean(r.psalm_ref), psalm_text: clean(r.psalm_text),
+      second_reading_ref: clean(r.second_reading_ref), second_reading_text: clean(r.second_reading_text),
+      gospel_ref: clean(r.gospel_ref), gospel_text: clean(r.gospel_text),
+      updated_at: new Date().toISOString()
     }
   })
   if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
-  var { error } = await supabaseAdmin.from('journal_content').upsert(mapped, { onConflict: 'journal_slug,day_number,week_number,lang,question_number' })
+  for (var i = 0; i < mapped.length; i += BATCH) {
+    var batch = mapped.slice(i, i + BATCH)
+    var { error } = await supabaseAdmin.from('lectionary').upsert(batch, { onConflict: 'cycle,season,week,weekday,feast_key,lang' })
+    if (error) errors.push('batch ' + i + ': ' + error.message)
+    else total += batch.length
+  }
+  return { count: total, error: errors.length > 0 ? errors.join('; ') : null }
+}
+
+// reflexiones → lectionary_reflections (upsert on cycle,season,week,feast_key,lang)
+// Excel cols: cycle, season, week, feast_key, feast_key (dup), lang, title, liturgical_color,
+//             gospel_ref, gospel_text, silence, meditative_phrase, inner_question,
+//             brief_prayer, spiritual_school, theme, tags
+async function importReflexiones(rows) {
+  var mapped = rows.filter(function(r) { return r.lang }).map(function(r) {
+    return {
+      cycle: clean(r.cycle) || '', season: clean(r.season) || '',
+      week: toNumOrDefault(r.week, 0), feast_key: clean(r.feast_key) || '',
+      lang: r.lang, title: clean(r.title), liturgical_color: clean(r.liturgical_color),
+      gospel_ref: clean(r.gospel_ref), gospel_text: clean(r.gospel_text),
+      silence: clean(r.silence), meditative_phrase: clean(r.meditative_phrase),
+      inner_question: clean(r.inner_question), brief_prayer: clean(r.brief_prayer),
+      spiritual_school: clean(r.spiritual_school) || 'bernardina',
+      theme: clean(r.theme),
+      tags: r.tags ? r.tags.split(',').map(function(t) { return t.trim() }) : [],
+      updated_at: new Date().toISOString()
+    }
+  })
+  if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
+  var { error } = await supabaseAdmin.from('lectionary_reflections').upsert(mapped, { onConflict: 'cycle,season,week,feast_key,lang' })
   return { count: mapped.length, error: error ? error.message : null }
 }
 
+// laudes/visperas → liturgy_hours (upsert on hour_type,psalter_week,weekday,season_variant,lang)
+// Excel cols: psalter_week, week, weekday, season_variant, lang, feast_key, title,
+//             psalm1_ref, psalm1_text, psalm1_antiphon, psalm2_ref, psalm2_text, psalm2_antiphon,
+//             psalm3_ref, psalm3_text, psalm3_antiphon, short_reading_ref, short_reading_text,
+//             canticle_ref, canticle_text, canticle_antiphon, hymn_text,
+//             responsory_v, responsory_r, intercessions, closing_prayer
+// NOTE: feast_key NOT included in insert; columns packed into JSONB content
+async function importLiturgia(rows, hourType) {
+  var validRows = rows.filter(function(r) {
+    return r.weekday !== '' && r.weekday !== undefined && !isNaN(parseInt(r.weekday))
+  })
+  if (validRows.length === 0) return { count: 0, error: 'No hay filas con weekday valido' }
+  var seen = {}, deduped = []
+  for (var i = 0; i < validRows.length; i++) {
+    var r = validRows[i]
+    var pw = toIntOrNull(r.psalter_week) || 1
+    var wd = parseInt(r.weekday)
+    var sv = clean(r.season_variant) || 'ordinary'
+    var ln = clean(r.lang) || 'es'
+    var key = hourType + '|' + pw + '|' + wd + '|' + sv + '|' + ln
+    if (seen[key]) continue
+    seen[key] = true
+    var content = {
+      title: clean(r.title),
+      psalm1: { ref: clean(r.psalm1_ref), text: clean(r.psalm1_text), antiphon: clean(r.psalm1_antiphon) },
+      psalm2: { ref: clean(r.psalm2_ref), text: clean(r.psalm2_text), antiphon: clean(r.psalm2_antiphon) },
+      psalm3: { ref: clean(r.psalm3_ref), text: clean(r.psalm3_text), antiphon: clean(r.psalm3_antiphon) },
+      short_reading: { ref: clean(r.short_reading_ref), text: clean(r.short_reading_text) },
+      canticle: { ref: clean(r.canticle_ref), text: clean(r.canticle_text), antiphon: clean(r.canticle_antiphon) },
+      hymn_text: clean(r.hymn_text),
+      responsory: { v: clean(r.responsory_v), r: clean(r.responsory_r) },
+      intercessions: clean(r.intercessions),
+      closing_prayer: clean(r.closing_prayer)
+    }
+    deduped.push({ hour_type: hourType, psalter_week: pw, weekday: wd, season_variant: sv, lang: ln, content: content })
+  }
+  var BATCH = 50, total = 0, errors = []
+  for (var i = 0; i < deduped.length; i += BATCH) {
+    var batch = deduped.slice(i, i + BATCH)
+    var { error } = await supabaseAdmin.from('liturgy_hours').upsert(batch, { onConflict: 'hour_type,psalter_week,weekday,season_variant,lang' })
+    if (error) errors.push('batch ' + i + ': ' + error.message)
+    else total += batch.length
+  }
+  return { count: total, error: errors.length > 0 ? errors.join('; ') : null }
+}
+
+// journals → journal_content (upsert on journal_slug,day_number,week_number,lang)
+// Excel cols: journal_slug, day_number, week_number, lang, title, content
+// NOTE: question_number and section_type are NOT sent
+async function importJournals(rows) {
+  var mapped = rows.filter(function(r) { return r.journal_slug }).map(function(r) {
+    return {
+      journal_slug: r.journal_slug.trim(),
+      day_number: toIntOrNull(r.day_number),
+      week_number: toIntOrNull(r.week_number),
+      lang: clean(r.lang) || 'es',
+      title: clean(r.title),
+      content: clean(r.content)
+    }
+  })
+  if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
+  var BATCH = 200, total = 0, errors = []
+  for (var i = 0; i < mapped.length; i += BATCH) {
+    var batch = mapped.slice(i, i + BATCH)
+    var { error } = await supabaseAdmin.from('journal_content').upsert(batch, { onConflict: 'journal_slug,day_number,week_number,lang' })
+    if (error) errors.push('batch ' + i + ': ' + error.message)
+    else total += batch.length
+  }
+  return { count: total, error: errors.length > 0 ? errors.join('; ') : null }
+}
+
+// buenas_noches → bedtime_stories (upsert on liturgical_period,cycle,story_number,lang)
+// Excel cols: liturgical_period, cycle, story_number, lang, title, content, gospel_reference, volume_slug
 async function importBuenasNoches(rows) {
   var mapped = rows.filter(function(r) {
     return r.liturgical_period && r.story_number && !isNaN(parseInt(r.story_number))
   }).map(function(r) {
     return {
-      liturgical_period: r.liturgical_period, cycle: r.cycle || 'A',
-      story_number: parseInt(r.story_number), lang: r.lang || 'es',
-      title: r.title || null, content: r.content || null,
-      gospel_reference: r.gospel_reference || null, volume_slug: r.volume_slug || null
+      liturgical_period: r.liturgical_period,
+      cycle: clean(r.cycle) || 'A',
+      story_number: parseInt(r.story_number),
+      lang: clean(r.lang) || 'es',
+      title: clean(r.title),
+      content: clean(r.content),
+      gospel_reference: clean(r.gospel_reference),
+      volume_slug: clean(r.volume_slug)
     }
   })
   if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }

@@ -1,16 +1,13 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import ComingSoon from './page.comingsoon'
 import { fetchDailyReadings, fetchLiturgicalDay } from './lib/liturgical-api'
-import { fetchSaint, fetchReflection, fetchLiturgyHour, fetchRosary, fetchChaplet, fetchAppLinks, fetchDayReadings } from './lib/content'
+import { fetchSaint, fetchDayReflection, fetchLiturgyHour, fetchRosary, fetchChaplet, fetchAppLinks, fetchDayReadings } from './lib/content'
 
 var supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
-
-var isComingSoon = process.env.NEXT_PUBLIC_COMING_SOON !== 'false'
 
 var colors = {
   pergamino: '#F8F1E6', vino: '#782F40', oro: '#B4903E',
@@ -70,6 +67,19 @@ var SEASON_ES = {
   advent: 'Adviento', lent: 'Cuaresma',
   'ordinary time': 'Tiempo Ordinario', ordinary: 'Tiempo Ordinario',
   pentecost: 'Pentecostés'
+}
+
+var CELEBRATION_TYPE_ES = {
+  'SUNDAY': 'Domingo', 'MONDAY': 'Lunes', 'TUESDAY': 'Martes',
+  'WEDNESDAY': 'Miércoles', 'THURSDAY': 'Jueves', 'FRIDAY': 'Viernes',
+  'SATURDAY': 'Sábado', 'FEAST': 'Fiesta', 'FEAST OF THE LORD': 'Fiesta del Señor',
+  'MEMORIAL': 'Memoria', 'OPTIONAL MEMORIAL': 'Memoria Opcional',
+  'OPTIONAL_MEMORIAL': 'Memoria Opcional', 'SOLEMNITY': 'Solemnidad', 'FERIA': 'Feria'
+}
+
+function translateCelebration(type) {
+  if (!type) return ''
+  return CELEBRATION_TYPE_ES[type.toUpperCase()] || type
 }
 
 var ROSARY_NAMES = {
@@ -375,9 +385,17 @@ function ViewHoy({ tier, onSwitchView }) {
   var [supabaseReadings, setSupabaseReadings] = useState(null)
   var [loading, setLoading] = useState(true)
   var [open, setOpen] = useState({
-    laudes: hour >= 5 && hour < 12,
-    visperas: hour >= 12 && hour < 20,
-    completas: hour >= 20 || hour < 5,
+    lecturas: false,
+    primera: false,
+    salmo: false,
+    segunda: false,
+    evangelio: false,
+    reflexion: false,
+    santo: false,
+    liturgia: false,
+    laudes: false,
+    visperas: false,
+    completas: false,
     rosario: false,
     coronilla: false
   })
@@ -387,7 +405,7 @@ function ViewHoy({ tier, onSwitchView }) {
       fetchDailyReadings(today),
       fetchLiturgicalDay(today),
       fetchSaint(monthDay),
-      fetchReflection(dateStr, 'es'),
+      fetchDayReflection(dateStr, 'es'),
       fetchLiturgyHour('lauds', 1, weekday, 'ordinary', 'es'),
       fetchLiturgyHour('vespers', 1, weekday, 'ordinary', 'es'),
       fetchLiturgyHour('compline', 1, weekday, 'ordinary', 'es'),
@@ -431,52 +449,49 @@ function ViewHoy({ tier, onSwitchView }) {
         <div style={s.badge(seasonColor)}>{seasonEs}</div>
         {celebration && celebration.type && (
           <div style={{ fontSize: '0.72rem', color: '#999', marginTop: '0.35rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-            {celebration.type}
+            {translateCelebration(celebration.type)}
           </div>
         )}
       </div>
 
       {/* A) Lecturas del día */}
       <div style={Object.assign({}, s.card, { borderLeft: '3px solid ' + seasonColor })}>
-        <div style={s.cardTitle}>Lecturas del Día</div>
-        {supabaseReadings ? (
-          /* Texto completo desde Supabase */
+        <div
+          onClick={function() { toggle('lecturas') }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.lecturas ? '0.25rem' : 0 }}
+        >
+          <div style={s.cardTitle}>Lecturas del Día</div>
+          <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.lecturas ? '▾' : '▸'}</span>
+        </div>
+        {open.lecturas && (supabaseReadings ? (
           <>
-            {supabaseReadings.first_reading_ref_es && (
-              <div className="reading-block">
-                <div className="reading-label">Primera Lectura</div>
-                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: '0 0 0.6rem' }}>{supabaseReadings.first_reading_ref_es}</p>
-                {supabaseReadings.first_reading_text_es && (
-                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.first_reading_text_es}</p>
+            {supabaseReadings.first_reading_ref && (
+              <Accordion title={'Primera Lectura — ' + supabaseReadings.first_reading_ref} isOpen={open.primera} onToggle={function() { toggle('primera') }}>
+                {supabaseReadings.first_reading_text && (
+                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.first_reading_text}</p>
                 )}
-              </div>
+              </Accordion>
             )}
-            {supabaseReadings.psalm_ref_es && (
-              <div className="reading-block">
-                <div className="reading-label">Salmo</div>
-                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: '0 0 0.6rem' }}>{supabaseReadings.psalm_ref_es}</p>
-                {supabaseReadings.psalm_text_es && (
-                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.psalm_text_es}</p>
+            {supabaseReadings.psalm_ref && (
+              <Accordion title={'Salmo — ' + supabaseReadings.psalm_ref} isOpen={open.salmo} onToggle={function() { toggle('salmo') }}>
+                {supabaseReadings.psalm_text && (
+                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.psalm_text}</p>
                 )}
-              </div>
+              </Accordion>
             )}
-            {supabaseReadings.second_reading_ref_es && (
-              <div className="reading-block">
-                <div className="reading-label">Segunda Lectura</div>
-                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: '0 0 0.6rem' }}>{supabaseReadings.second_reading_ref_es}</p>
-                {supabaseReadings.second_reading_text_es && (
-                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.second_reading_text_es}</p>
+            {supabaseReadings.second_reading_ref && (
+              <Accordion title={'Segunda Lectura — ' + supabaseReadings.second_reading_ref} isOpen={open.segunda} onToggle={function() { toggle('segunda') }}>
+                {supabaseReadings.second_reading_text && (
+                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.second_reading_text}</p>
                 )}
-              </div>
+              </Accordion>
             )}
-            {supabaseReadings.gospel_ref_es && (
-              <div className="reading-block" style={{ borderBottom: 'none', marginBottom: 0, backgroundColor: '#fdf8f0', padding: '0.75rem', borderRadius: '6px', borderLeft: '3px solid ' + colors.vino }}>
-                <div className="reading-label" style={{ color: colors.vino }}>Evangelio</div>
-                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.vino, margin: '0 0 0.6rem' }}>{supabaseReadings.gospel_ref_es}</p>
-                {supabaseReadings.gospel_text_es && (
-                  <p style={{ lineHeight: 1.9, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.gospel_text_es}</p>
+            {supabaseReadings.gospel_ref && (
+              <Accordion title={'Evangelio — ' + supabaseReadings.gospel_ref} isOpen={open.evangelio} onToggle={function() { toggle('evangelio') }} highlight={true}>
+                {supabaseReadings.gospel_text && (
+                  <p style={{ lineHeight: 1.9, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.gospel_text}</p>
                 )}
-              </div>
+              </Accordion>
             )}
           </>
         ) : !rd ? (
@@ -484,69 +499,67 @@ function ViewHoy({ tier, onSwitchView }) {
             No se pudieron cargar las lecturas. Verifica tu conexión.
           </p>
         ) : (
-          /* Solo referencias desde la API */
           <>
             {rd.firstReading && (
-              <div className="reading-block">
-                <div className="reading-label">Primera Lectura</div>
-                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: 0 }}>{rd.firstReading}</p>
-              </div>
+              <Accordion title={'Primera Lectura — ' + rd.firstReading} isOpen={open.primera} onToggle={function() { toggle('primera') }}>
+                <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>
+              </Accordion>
             )}
             {rd.psalm && (
-              <div className="reading-block">
-                <div className="reading-label">Salmo</div>
-                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: 0 }}>{rd.psalm}</p>
-              </div>
+              <Accordion title={'Salmo — ' + rd.psalm} isOpen={open.salmo} onToggle={function() { toggle('salmo') }}>
+                <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>
+              </Accordion>
             )}
             {rd.secondReading && (
-              <div className="reading-block">
-                <div className="reading-label">Segunda Lectura</div>
-                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, margin: 0 }}>{rd.secondReading}</p>
-              </div>
+              <Accordion title={'Segunda Lectura — ' + rd.secondReading} isOpen={open.segunda} onToggle={function() { toggle('segunda') }}>
+                <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>
+              </Accordion>
             )}
             {rd.gospel && (
-              <div className="reading-block" style={{ borderBottom: 'none', marginBottom: 0 }}>
-                <div className="reading-label">Evangelio</div>
-                <p style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.vino, margin: 0 }}>{rd.gospel}</p>
-              </div>
+              <Accordion title={'Evangelio — ' + rd.gospel} isOpen={open.evangelio} onToggle={function() { toggle('evangelio') }} highlight={true}>
+                <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>
+              </Accordion>
             )}
-            <p style={{ marginTop: '1rem', fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>
-              Texto completo próximamente
-            </p>
           </>
-        )}
+        ))}
       </div>
 
       {/* B) Reflexión */}
       <div style={s.card}>
-        <div style={s.cardTitle}>Reflexión — Alberto de Claraval</div>
-        {!reflection ? (
+        <div
+          onClick={function() { toggle('reflexion') }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.reflexion ? '0.75rem' : 0 }}
+        >
+          <div style={s.cardTitle}>Reflexión — Alberto de Claraval</div>
+          <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.reflexion ? '▾' : '▸'}</span>
+        </div>
+        {open.reflexion && (!reflection ? (
           <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Reflexión en preparación...</p>
         ) : canReflection ? (
           <div>
-            {reflection.content && reflection.content.silence && (
+            {reflection.silence && (
               <p style={Object.assign({}, s.p, { fontStyle: 'italic', color: '#777', marginBottom: '1rem' })}>
-                {reflection.content.silence}
+                {reflection.silence}
               </p>
             )}
-            {reflection.content && reflection.content.meditative_phrase && (
+            {reflection.meditative_phrase && (
               <p style={Object.assign({}, s.p, { fontWeight: 'bold', marginBottom: '1rem' })}>
-                «{reflection.content.meditative_phrase}»
+                «{reflection.meditative_phrase}»
               </p>
             )}
-            {reflection.content && reflection.content.inner_question && (
+            {reflection.inner_question && (
               <p style={Object.assign({}, s.p, { color: colors.verde, marginBottom: '1rem' })}>
-                {reflection.content.inner_question}
+                {reflection.inner_question}
               </p>
             )}
-            {reflection.content && reflection.content.brief_prayer && (
+            {reflection.brief_prayer && (
               <p style={Object.assign({}, s.p, { fontStyle: 'italic' })}>
-                {reflection.content.brief_prayer}
+                {reflection.brief_prayer}
               </p>
             )}
-            {reflection.gospel_reference && (
-              <p style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.75rem' }}>
-                {reflection.gospel_reference}
+            {reflection.gospel_ref && (
+              <p style={{ fontSize: '0.75rem', color: colors.oro, marginBottom: '0.5rem', fontWeight: 'bold', letterSpacing: '0.05em' }}>
+                {reflection.gospel_ref}
               </p>
             )}
           </div>
@@ -563,22 +576,38 @@ function ViewHoy({ tier, onSwitchView }) {
               Desbloquear — $1.99/mes
             </button>
           </>
-        )}
+        ))}
       </div>
 
       {/* C) Santo del día */}
       <div style={s.card}>
-        <div style={s.cardTitle}>Santo del Día</div>
-        {!celebration && !saint ? (
+        <div
+          onClick={function() { toggle('santo') }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.santo ? '0.75rem' : 0 }}
+        >
+          <div style={s.cardTitle}>Santo del Día</div>
+          <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.santo ? '▾' : '▸'}</span>
+        </div>
+        {open.santo && (!celebration && !saint ? (
           <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Información no disponible</p>
         ) : (
           <>
-            <h2 style={Object.assign({}, s.h1, { fontSize: '1.1rem', marginBottom: '0.4rem' })}>
+            <h2 style={Object.assign({}, s.h1, { fontSize: '1.1rem', marginBottom: '0.2rem' })}>
               {saint ? (saint.name_es || (celebration && celebration.name)) : (celebration && celebration.name)}
             </h2>
+            {saint && saint.feast_day_es && (
+              <div style={{ fontSize: '0.78rem', color: colors.oro, marginBottom: '0.2rem' }}>{saint.feast_day_es}</div>
+            )}
             {celebration && celebration.type && (
               <div style={{ fontSize: '0.72rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                {celebration.type}
+                {translateCelebration(celebration.type)}
+              </div>
+            )}
+            {saint && (saint.birth_year || saint.death_year) && (
+              <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.5rem' }}>
+                {saint.birth_year && saint.death_year
+                  ? saint.birth_year + ' – ' + saint.death_year
+                  : saint.birth_year ? 'n. ' + saint.birth_year : '† ' + saint.death_year}
               </div>
             )}
             {saint && saint.bio_es ? (
@@ -591,6 +620,12 @@ function ViewHoy({ tier, onSwitchView }) {
                 Patrono/a de: {saint.patronage_es}
               </p>
             )}
+            {saint && (saint.canonization_year || saint.canonized_by) && (
+              <p style={{ fontSize: '0.78rem', color: '#999', marginTop: '0.5rem' }}>
+                Canonizado{saint.canonization_year ? ' en ' + saint.canonization_year : ''}
+                {saint.canonized_by ? ' por ' + saint.canonized_by : ''}
+              </p>
+            )}
             {saint && saint.prayer_es && (
               <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e8dcc8' }}>
                 <div style={{ fontSize: '0.68rem', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>Oración</div>
@@ -598,42 +633,50 @@ function ViewHoy({ tier, onSwitchView }) {
               </div>
             )}
           </>
-        )}
+        ))}
       </div>
 
       {/* D) Liturgia de las Horas */}
       <div style={s.card}>
-        <div style={s.cardTitle}>Liturgia de las Horas</div>
-        <Accordion
-          title={'Laudes' + (hour >= 5 && hour < 12 ? ' · Oración de la mañana' : '')}
-          isOpen={open.laudes}
-          onToggle={function() { toggle('laudes') }}
-          highlight={hour >= 5 && hour < 12}
+        <div
+          onClick={function() { toggle('liturgia') }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.liturgia ? '0.25rem' : 0 }}
         >
-          {lh.laudes && lh.laudes.content
-            ? <LiturgiaContent data={lh.laudes} />
-            : <Proximamente />}
-        </Accordion>
-        <Accordion
-          title={'Vísperas' + (hour >= 12 && hour < 20 ? ' · Oración de la tarde' : '')}
-          isOpen={open.visperas}
-          onToggle={function() { toggle('visperas') }}
-          highlight={hour >= 12 && hour < 20}
-        >
-          {lh.visperas && lh.visperas.content
-            ? <LiturgiaContent data={lh.visperas} />
-            : <Proximamente />}
-        </Accordion>
-        <Accordion
-          title={'Completas' + ((hour >= 20 || hour < 5) ? ' · Oración de la noche' : '')}
-          isOpen={open.completas}
-          onToggle={function() { toggle('completas') }}
-          highlight={hour >= 20 || hour < 5}
-        >
-          {lh.completas && lh.completas.content
-            ? <LiturgiaContent data={lh.completas} />
-            : <Proximamente />}
-        </Accordion>
+          <div style={s.cardTitle}>Liturgia de las Horas</div>
+          <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.liturgia ? '▾' : '▸'}</span>
+        </div>
+        {open.liturgia && <>
+          <Accordion
+            title={'Laudes' + (hour >= 5 && hour < 12 ? ' · Oración de la mañana' : '')}
+            isOpen={open.laudes}
+            onToggle={function() { toggle('laudes') }}
+            highlight={hour >= 5 && hour < 12}
+          >
+            {lh.laudes && lh.laudes.content
+              ? <LiturgiaContent data={lh.laudes} />
+              : <Proximamente />}
+          </Accordion>
+          <Accordion
+            title={'Vísperas' + (hour >= 12 && hour < 20 ? ' · Oración de la tarde' : '')}
+            isOpen={open.visperas}
+            onToggle={function() { toggle('visperas') }}
+            highlight={hour >= 12 && hour < 20}
+          >
+            {lh.visperas && lh.visperas.content
+              ? <LiturgiaContent data={lh.visperas} />
+              : <Proximamente />}
+          </Accordion>
+          <Accordion
+            title={'Completas' + ((hour >= 20 || hour < 5) ? ' · Oración de la noche' : '')}
+            isOpen={open.completas}
+            onToggle={function() { toggle('completas') }}
+            highlight={hour >= 20 || hour < 5}
+          >
+            {lh.completas && lh.completas.content
+              ? <LiturgiaContent data={lh.completas} />
+              : <Proximamente />}
+          </Accordion>
+        </>}
       </div>
 
       {/* E) Rosario */}
@@ -938,9 +981,95 @@ function ViewRedeem({ user }) {
   )
 }
 
+function LitugiaPsalterContent({ c, stl }) {
+  function PsalmBlock({ ps, label }) {
+    if (!ps) return null
+    return (
+      <div style={{ marginBottom: '1.5rem' }}>
+        {label && <div style={stl.label}>{label}</div>}
+        {ps.antiphon && <div style={stl.antiphon}>Ant. {ps.antiphon}</div>}
+        {ps.ref && <div style={stl.psalmRef}>{ps.ref}</div>}
+        {ps.text && <div style={stl.prayer}>{ps.text}</div>}
+        {ps.antiphon && <div style={stl.antiphon}>Ant. {ps.antiphon}</div>}
+      </div>
+    )
+  }
+  return (
+    <div>
+      {c.title && <div style={{ ...stl.label, fontSize: '0.85rem', marginBottom: '1rem' }}>{c.title}</div>}
+      {c.hymn_text && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Himno</div>
+            <div style={stl.hymn}>{c.hymn_text}</div>
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {(c.psalm1 || c.psalm2 || c.psalm3 || c.canticle) && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Salmodia</div>
+            <PsalmBlock ps={c.psalm1} label={null} />
+            <PsalmBlock ps={c.psalm2} label={null} />
+            <PsalmBlock ps={c.psalm3} label={null} />
+            {c.canticle && (
+              <div style={{ marginBottom: '1rem' }}>
+                <div style={stl.label}>Cántico</div>
+                {c.canticle.antiphon && <div style={stl.antiphon}>Ant. {c.canticle.antiphon}</div>}
+                {c.canticle.ref && <div style={stl.psalmRef}>{c.canticle.ref}</div>}
+                {c.canticle.text && <div style={stl.prayer}>{c.canticle.text}</div>}
+                {c.canticle.antiphon && <div style={stl.antiphon}>Ant. {c.canticle.antiphon}</div>}
+              </div>
+            )}
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.short_reading && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Lectura breve</div>
+            {c.short_reading.ref && <div style={stl.psalmRef}>{c.short_reading.ref}</div>}
+            {c.short_reading.text && <div style={stl.prayer}>{c.short_reading.text}</div>}
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.responsory && (c.responsory.v || c.responsory.r) && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Responsorio breve</div>
+            {c.responsory.v && <div style={stl.verse}>V. {c.responsory.v}</div>}
+            {c.responsory.r && <div style={stl.response}>R. {c.responsory.r}</div>}
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.intercessions && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Preces</div>
+            <div style={stl.prayer}>{c.intercessions}</div>
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.closing_prayer && (
+        <div style={stl.section}>
+          <div style={stl.label}>Oración</div>
+          <div style={stl.prayer}>{c.closing_prayer}</div>
+          <div style={stl.response}>R. Amén.</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function LiturgiaContent({ data }) {
+  if (!data) return <p style={s.p}>Contenido no disponible</p>
   var c = data.content
-  if (!c || typeof c === 'string') return <p style={s.p}>{c || ''}</p>
+  if (!c || typeof c === 'string') return <p style={s.p}>{c || 'Contenido no disponible'}</p>
   var stl = {
     section: { marginBottom: '1.25rem' },
     label: { fontSize: '0.7rem', color: colors.oro, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 'bold' },
@@ -955,78 +1084,119 @@ function LiturgiaContent({ data }) {
     prayer: { fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '0.75rem' },
     divider: { borderTop: '1px solid #e8dcc8', margin: '1rem 0' }
   }
+  if (c.psalm1 !== undefined || c.psalm2 !== undefined) {
+    return <LitugiaPsalterContent c={c} stl={stl} />
+  }
   return (
     <div>
-      <div style={stl.section}>
-        <div style={stl.label}>Invocación inicial</div>
-        <div style={stl.verse}>V. {c.opening.v}</div>
-        <div style={stl.response}>R. {c.opening.r}</div>
-        <div style={stl.stanza}>{c.opening.gloria}</div>
-      </div>
-      <div style={stl.divider} />
-      <div style={stl.section}>
-        <div style={stl.rubric}>{c.exam}</div>
-      </div>
-      <div style={stl.divider} />
-      <div style={stl.section}>
-        <div style={stl.label}>Himno</div>
-        <div style={stl.hymn}>{c.hymn}</div>
-      </div>
-      <div style={stl.divider} />
-      <div style={stl.section}>
-        <div style={stl.label}>Salmodia</div>
-        {c.psalms.map(function(ps, i) {
-          return (
-            <div key={i} style={{ marginBottom: i < c.psalms.length - 1 ? '1.5rem' : 0 }}>
-              <div style={stl.antiphon}>Ant. {ps.antiphon}</div>
-              <div style={stl.psalmRef}>{ps.ref}</div>
-              <div style={stl.psalmTitle}>{ps.title}</div>
-              {ps.stanzas.map(function(st, j) {
-                return <div key={j} style={stl.stanza}>{st}</div>
-              })}
-              <div style={stl.antiphon}>Ant. {ps.antiphon}</div>
-            </div>
-          )
-        })}
-      </div>
-      <div style={stl.divider} />
-      <div style={stl.section}>
-        <div style={stl.label}>Lectura breve</div>
-        <div style={stl.psalmRef}>{c.reading.ref}</div>
-        <div style={stl.prayer}>{c.reading.text}</div>
-      </div>
-      <div style={stl.divider} />
-      <div style={stl.section}>
-        <div style={stl.label}>Responsorio breve</div>
-        <div style={stl.verse}>V. {c.responsory.v}</div>
-        <div style={stl.response}>R. {c.responsory.r}</div>
-      </div>
-      <div style={stl.divider} />
-      <div style={stl.section}>
-        <div style={stl.label}>{c.nunc_dimittis.title}</div>
-        <div style={stl.psalmRef}>{c.nunc_dimittis.ref}</div>
-        <div style={stl.antiphon}>Ant. {c.nunc_dimittis.antiphon}</div>
-        {c.nunc_dimittis.stanzas.map(function(st, j) {
-          return <div key={j} style={stl.stanza}>{st}</div>
-        })}
-        <div style={stl.antiphon}>Ant. {c.nunc_dimittis.antiphon}</div>
-      </div>
-      <div style={stl.divider} />
-      <div style={stl.section}>
-        <div style={stl.label}>Oración</div>
-        <div style={stl.prayer}>{c.prayer}</div>
-        <div style={stl.response}>R. Amén.</div>
-      </div>
-      <div style={stl.divider} />
-      <div style={stl.section}>
-        <div style={stl.verse}>V. {c.blessing}</div>
-        <div style={stl.response}>R. Amén.</div>
-      </div>
-      <div style={stl.divider} />
-      <div style={stl.section}>
-        <div style={stl.label}>{c.marian_antiphon.title}</div>
-        <div style={stl.hymn}>{c.marian_antiphon.text}</div>
-      </div>
+      {c.opening && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Invocación inicial</div>
+            <div style={stl.verse}>V. {c.opening.v}</div>
+            <div style={stl.response}>R. {c.opening.r}</div>
+            {c.opening.gloria && <div style={stl.stanza}>{c.opening.gloria}</div>}
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.exam && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.rubric}>{c.exam}</div>
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.hymn && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Himno</div>
+            <div style={stl.hymn}>{c.hymn}</div>
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.psalms && c.psalms.length > 0 && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Salmodia</div>
+            {c.psalms.map(function(ps, i) {
+              return (
+                <div key={i} style={{ marginBottom: i < c.psalms.length - 1 ? '1.5rem' : 0 }}>
+                  {ps.antiphon && <div style={stl.antiphon}>Ant. {ps.antiphon}</div>}
+                  {ps.ref && <div style={stl.psalmRef}>{ps.ref}</div>}
+                  {ps.title && <div style={stl.psalmTitle}>{ps.title}</div>}
+                  {ps.stanzas && ps.stanzas.map(function(st, j) {
+                    return <div key={j} style={stl.stanza}>{st}</div>
+                  })}
+                  {ps.antiphon && <div style={stl.antiphon}>Ant. {ps.antiphon}</div>}
+                </div>
+              )
+            })}
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.reading && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Lectura breve</div>
+            {c.reading.ref && <div style={stl.psalmRef}>{c.reading.ref}</div>}
+            {c.reading.text && <div style={stl.prayer}>{c.reading.text}</div>}
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.responsory && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Responsorio breve</div>
+            <div style={stl.verse}>V. {c.responsory.v}</div>
+            <div style={stl.response}>R. {c.responsory.r}</div>
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.nunc_dimittis && (
+        <>
+          <div style={stl.section}>
+            {c.nunc_dimittis.title && <div style={stl.label}>{c.nunc_dimittis.title}</div>}
+            {c.nunc_dimittis.ref && <div style={stl.psalmRef}>{c.nunc_dimittis.ref}</div>}
+            {c.nunc_dimittis.antiphon && <div style={stl.antiphon}>Ant. {c.nunc_dimittis.antiphon}</div>}
+            {c.nunc_dimittis.stanzas && c.nunc_dimittis.stanzas.map(function(st, j) {
+              return <div key={j} style={stl.stanza}>{st}</div>
+            })}
+            {c.nunc_dimittis.antiphon && <div style={stl.antiphon}>Ant. {c.nunc_dimittis.antiphon}</div>}
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.prayer && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Oración</div>
+            <div style={stl.prayer}>{c.prayer}</div>
+            <div style={stl.response}>R. Amén.</div>
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.blessing && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.verse}>V. {c.blessing}</div>
+            <div style={stl.response}>R. Amén.</div>
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.marian_antiphon && (
+        <div style={stl.section}>
+          {c.marian_antiphon.title && <div style={stl.label}>{c.marian_antiphon.title}</div>}
+          {c.marian_antiphon.text && <div style={stl.hymn}>{c.marian_antiphon.text}</div>}
+        </div>
+      )}
     </div>
   )
 }
@@ -1112,6 +1282,5 @@ function App() {
 }
 
 export default function Home() {
-  if (isComingSoon) return <ComingSoon />
   return <App />
 }
