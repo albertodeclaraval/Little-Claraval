@@ -167,9 +167,8 @@ async function importLiturgia(rows, hourType) {
   return { count: total, error: errors.length > 0 ? errors.join('; ') : null }
 }
 
-// journals → journal_content (upsert on journal_slug,day_number,week_number,lang)
-// Excel cols: journal_slug, day_number, week_number, lang, title, content
-// NOTE: question_number and section_type are NOT sent
+// journals → journal_content (upsert on journal_slug,day_number,week_number,lang,question_number)
+// Excel cols: journal_slug, day_number, week_number, lang, section_type, question_number, title, content
 async function importJournals(rows) {
   var mapped = rows.filter(function(r) { return r.journal_slug }).map(function(r) {
     return {
@@ -177,6 +176,8 @@ async function importJournals(rows) {
       day_number: toIntOrNull(r.day_number),
       week_number: toIntOrNull(r.week_number),
       lang: clean(r.lang) || 'es',
+      section_type: clean(r.section_type) || 'question',
+      question_number: toIntOrNull(r.question_number) || 1,
       title: clean(r.title),
       content: clean(r.content)
     }
@@ -185,11 +186,29 @@ async function importJournals(rows) {
   var BATCH = 200, total = 0, errors = []
   for (var i = 0; i < mapped.length; i += BATCH) {
     var batch = mapped.slice(i, i + BATCH)
-    var { error } = await supabaseAdmin.from('journal_content').upsert(batch, { onConflict: 'journal_slug,day_number,week_number,lang' })
+    var { error } = await supabaseAdmin.from('journal_content').upsert(batch, { onConflict: 'journal_slug,day_number,week_number,lang,question_number' })
     if (error) errors.push('batch ' + i + ': ' + error.message)
     else total += batch.length
   }
   return { count: total, error: errors.length > 0 ? errors.join('; ') : null }
+}
+
+// journal_metadata → journal_metadata (upsert on journal_slug,lang)
+// Excel cols: journal_slug, lang, description, opening_prayer, closing_prayer
+async function importJournalMetadata(rows) {
+  var mapped = rows.filter(function(r) { return r.journal_slug && r.lang }).map(function(r) {
+    return {
+      journal_slug: r.journal_slug.trim(),
+      lang: clean(r.lang) || 'es',
+      description: clean(r.description),
+      opening_prayer: clean(r.opening_prayer),
+      closing_prayer: clean(r.closing_prayer)
+    }
+  })
+  if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
+  var { error } = await supabaseAdmin.from('journal_metadata').upsert(mapped, { onConflict: 'journal_slug,lang' })
+  if (error) return { count: 0, error: error.message }
+  return { count: mapped.length, error: null }
 }
 
 // buenas_noches → bedtime_stories (upsert on liturgical_period,cycle,story_number,lang)
@@ -239,6 +258,7 @@ export async function POST(request) {
     else if (tabName === 'laudes') result = await importLiturgia(rows, 'lauds')
     else if (tabName === 'visperas') result = await importLiturgia(rows, 'vespers')
     else if (tabName === 'journals') result = await importJournals(rows)
+    else if (tabName === 'journal_metadata') result = await importJournalMetadata(rows)
     else if (tabName === 'buenas_noches') result = await importBuenasNoches(rows)
     else return Response.json({ error: 'Tab no reconocido: ' + tabName }, { status: 400 })
     return Response.json({ success: true, count: result.count, error: result.error })

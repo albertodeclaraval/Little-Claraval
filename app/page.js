@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { fetchDailyReadings, fetchLiturgicalDay } from './lib/liturgical-api'
-import { fetchSaint, fetchDayReflection, fetchLiturgyHour, fetchRosary, fetchChaplet, fetchAppLinks, fetchDayReadings } from './lib/content'
+import { fetchSaint, fetchDayReflection, fetchLiturgyHour, fetchRosary, fetchChaplet, fetchAppLinks, fetchDayReadings, getJournalDay, getJournalEntries, saveJournalEntries } from './lib/content'
 
 var supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -34,15 +34,15 @@ var s = {
 }
 
 var JOURNALS = [
-  { slug: 'examen', title: 'Examen del Dia', titleEn: 'Daily Examen', type: 'daily', total: 120, questionsPerUnit: 3 },
-  { slug: 'paz', title: 'Paz Verdadera', titleEn: 'True Peace', type: 'daily', total: 120, questionsPerUnit: 3 },
-  { slug: 'fortaleza', title: 'Fortaleza', titleEn: 'Fortitude', type: 'daily', total: 120, questionsPerUnit: 3 },
-  { slug: 'fiat', title: 'Fiat', titleEn: 'Fiat', type: 'daily', total: 120, questionsPerUnit: 3 },
-  { slug: 'verbum', title: 'Verbum', titleEn: 'Verbum', type: 'daily', total: 120, questionsPerUnit: 3 },
-  { slug: 'magnificat', title: 'Magnificat', titleEn: 'Magnificat', type: 'daily', total: 120, questionsPerUnit: 3 },
-  { slug: 'confiteor', title: 'Confiteor', titleEn: 'Confiteor', type: 'weekly', total: 52, questionsPerUnit: 3 },
-  { slug: 'lumen', title: 'Lumen', titleEn: 'Lumen', type: 'weekly', total: 52, questionsPerUnit: 3, hasPatronSaint: true },
-  { slug: 'miles', title: 'Miles Christi', titleEn: 'Miles Christi', type: 'daily', total: 90, questionsPerUnit: 6 },
+  { slug: 'EXAMEN_DEL_DIA', title: 'Examen del Dia', titleEn: 'Daily Examen', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'PAZ_VERDADERA', title: 'Paz Verdadera', titleEn: 'True Peace', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'FORTALEZA', title: 'Fortaleza', titleEn: 'Fortitude', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'FIAT', title: 'Fiat', titleEn: 'Fiat', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'VERBUM', title: 'Verbum', titleEn: 'Verbum', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'MAGNIFICAT', title: 'Magnificat', titleEn: 'Magnificat', type: 'daily', total: 120, questionsPerUnit: 3 },
+  { slug: 'CONFITEOR', title: 'Confiteor', titleEn: 'Confiteor', type: 'weekly', total: 52, questionsPerUnit: 3 },
+  { slug: 'LUMEN', title: 'Lumen', titleEn: 'Lumen', type: 'weekly', total: 52, questionsPerUnit: 3, hasPatronSaint: true },
+  { slug: 'MILES_CHRISTI', title: 'Miles Christi', titleEn: 'Miles Christi', type: 'daily', total: 90, questionsPerUnit: 6 },
 ]
 
 var TIER_LEVELS = { free: 0, peregrino: 1, discipulo: 2, claraval: 3 }
@@ -793,12 +793,6 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
   var [patronSaint, setPatronSaint] = useState(null)
 
   useEffect(function() {
-    supabase.from('journal_metadata').select('description, opening_prayer, closing_prayer').eq('journal_slug', journal.slug).eq('lang', 'es').maybeSingle().then(function(r) {
-      setMetadata(r.data || null)
-    })
-  }, [journal.slug])
-
-  useEffect(function() {
     if (!journal.hasPatronSaint) return
     supabase.from('journal_content').select('title, content').eq('journal_slug', journal.slug).eq('section_type', 'patron_saint').eq('lang', 'es').maybeSingle().then(function(r) {
       setPatronSaint(r.data || null)
@@ -806,47 +800,36 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
   }, [journal.slug])
 
   useEffect(function() {
-    if (!user) return
     if (currentUnit === 0) { setLoading(false); setQuestions([]); return }
     setLoading(true)
     setAnswers({})
     setSaved(false)
-    var qQuery = supabase.from('journal_content').select('title, content, question_number').eq('journal_slug', journal.slug).eq('section_type', 'question').eq('lang', 'es').order('question_number')
-    if (isWeekly) qQuery = qQuery.eq('week_number', currentUnit)
-    else qQuery = qQuery.eq('day_number', currentUnit)
-    var eQuery = supabase.from('journal_entries').select('question_number, content').eq('user_id', user.id).eq('journal_slug', journal.slug).order('question_number')
-    if (isWeekly) eQuery = eQuery.eq('week_number', currentUnit)
-    else eQuery = eQuery.eq('day_number', currentUnit)
-    Promise.all([qQuery, eQuery]).then(function(results) {
-      setQuestions(results[0].data || [])
+    var entriesPromise = user
+      ? getJournalEntries(user.id, journal.slug, currentUnit, 'es')
+      : Promise.resolve([])
+    Promise.all([
+      getJournalDay(journal.slug, currentUnit, 'es', isWeekly),
+      entriesPromise
+    ]).then(function(results) {
+      var day = results[0]
+      setMetadata(day.metadata)
+      setQuestions(day.questions)
       var a = {}
-      if (results[1].data) results[1].data.forEach(function(e) { a[e.question_number || 1] = e.content || '' })
+      results[1].forEach(function(e) { a[e.question_number || 1] = e.response_text || '' })
       setAnswers(a)
       setLoading(false)
     })
-  }, [user, journal.slug, journal.type, currentUnit])
+  }, [journal.slug, journal.type, currentUnit, user])
 
   async function handleSave() {
     if (!user) return
     setSaving(true)
     var saveList = questions.length > 0 ? questions : [{ question_number: 1 }]
-    var ops = saveList.map(async function(q) {
+    var entries = saveList.map(function(q) {
       var qn = q.question_number || 1
-      var content = answers[qn] || ''
-      var filterQ = supabase.from('journal_entries').select('id').eq('user_id', user.id).eq('journal_slug', journal.slug).eq('question_number', qn)
-      if (isWeekly) filterQ = filterQ.eq('week_number', currentUnit)
-      else filterQ = filterQ.eq('day_number', currentUnit)
-      var ex = await filterQ.maybeSingle()
-      if (ex.data) {
-        await supabase.from('journal_entries').update({ content: content, updated_at: new Date().toISOString() }).eq('id', ex.data.id)
-      } else {
-        var record = { user_id: user.id, journal_slug: journal.slug, question_number: qn, content: content }
-        if (isWeekly) record.week_number = currentUnit
-        else record.day_number = currentUnit
-        await supabase.from('journal_entries').insert(record)
-      }
+      return { question_number: qn, response_text: answers[qn] || '' }
     })
-    await Promise.all(ops)
+    await saveJournalEntries(user.id, journal.slug, currentUnit, 'es', entries)
     setSaving(false); setSaved(true); setTimeout(function() { setSaved(false) }, 2000)
   }
 
@@ -908,7 +891,11 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
                     </div>
                   )
                 })}
-                <button style={s.btn(saved ? colors.verde : colors.vino)} onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : saved ? 'Guardado!' : 'Guardar entrada'}</button>
+                {user ? (
+                  <button style={s.btn(saved ? colors.verde : colors.vino)} onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : saved ? 'Guardado ✓' : 'Guardar entrada'}</button>
+                ) : (
+                  <p style={{ fontSize: '0.85rem', color: '#888', fontStyle: 'italic', textAlign: 'center', marginTop: '0.75rem' }}>Inicia sesión para guardar tus entradas</p>
+                )}
                 {metadata && metadata.closing_prayer && (
                   <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f0e8d8' }}>
                     <span style={{ color: colors.vino, marginRight: '0.4rem' }}>✠</span>{metadata.closing_prayer}
@@ -982,6 +969,7 @@ function ViewRedeem({ user }) {
 }
 
 function LitugiaPsalterContent({ c, stl }) {
+  if (!c) return <p style={s.p}>Contenido no disponible aún</p>
   function PsalmBlock({ ps, label }) {
     if (!ps) return null
     return (
@@ -1067,9 +1055,9 @@ function LitugiaPsalterContent({ c, stl }) {
 }
 
 function LiturgiaContent({ data }) {
-  if (!data) return <p style={s.p}>Contenido no disponible</p>
+  if (!data) return <p style={s.p}>Contenido no disponible aún</p>
   var c = data.content
-  if (!c || typeof c === 'string') return <p style={s.p}>{c || 'Contenido no disponible'}</p>
+  if (!c || typeof c === 'string') return <p style={s.p}>Contenido no disponible aún</p>
   var stl = {
     section: { marginBottom: '1.25rem' },
     label: { fontSize: '0.7rem', color: colors.oro, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 'bold' },
@@ -1093,9 +1081,9 @@ function LiturgiaContent({ data }) {
         <>
           <div style={stl.section}>
             <div style={stl.label}>Invocación inicial</div>
-            <div style={stl.verse}>V. {c.opening.v}</div>
-            <div style={stl.response}>R. {c.opening.r}</div>
-            {c.opening.gloria && <div style={stl.stanza}>{c.opening.gloria}</div>}
+            {c.opening?.v && <div style={stl.verse}>V. {c.opening.v}</div>}
+            {c.opening?.r && <div style={stl.response}>R. {c.opening.r}</div>}
+            {c.opening?.gloria && <div style={stl.stanza}>{c.opening.gloria}</div>}
           </div>
           <div style={stl.divider} />
         </>
@@ -1152,8 +1140,8 @@ function LiturgiaContent({ data }) {
         <>
           <div style={stl.section}>
             <div style={stl.label}>Responsorio breve</div>
-            <div style={stl.verse}>V. {c.responsory.v}</div>
-            <div style={stl.response}>R. {c.responsory.r}</div>
+            {c.responsory?.v && <div style={stl.verse}>V. {c.responsory.v}</div>}
+            {c.responsory?.r && <div style={stl.response}>R. {c.responsory.r}</div>}
           </div>
           <div style={stl.divider} />
         </>

@@ -225,3 +225,57 @@ export async function fetchAppLinks() {
     .order('sort_order')
   return data || []
 }
+
+export async function getJournalEntries(userId, journalSlug, dayNumber, lang) {
+  var { data } = await supabase
+    .from('journal_entries')
+    .select('question_number, response_text')
+    .eq('user_id', userId)
+    .eq('journal_slug', journalSlug)
+    .eq('day_number', dayNumber)
+    .eq('lang', lang || 'es')
+    .order('question_number')
+  return data || []
+}
+
+export async function saveJournalEntries(userId, journalSlug, dayNumber, lang, entries) {
+  var lg = lang || 'es'
+  var records = entries.map(function(e) {
+    return {
+      user_id: userId,
+      journal_slug: journalSlug,
+      day_number: dayNumber,
+      lang: lg,
+      question_number: e.question_number,
+      response_text: e.response_text,
+      updated_at: new Date().toISOString()
+    }
+  })
+  var { error } = await supabase
+    .from('journal_entries')
+    .upsert(records, { onConflict: 'user_id,journal_slug,day_number,question_number,lang' })
+  return error
+}
+
+export async function getJournalDay(journalSlug, unitNumber, lang, isWeekly) {
+  var lg = lang || 'es'
+  var contentQuery = supabase
+    .from('journal_content')
+    .select('title, content, question_number')
+    .eq('journal_slug', journalSlug)
+    .eq('section_type', 'question')
+    .eq('lang', lg)
+    .order('question_number')
+  if (isWeekly) contentQuery = contentQuery.eq('week_number', unitNumber)
+  else contentQuery = contentQuery.eq('day_number', unitNumber)
+
+  var [metaRes, questionsRes] = await Promise.all([
+    supabase.from('journal_metadata').select('description, opening_prayer, closing_prayer').eq('journal_slug', journalSlug).eq('lang', lg).maybeSingle(),
+    contentQuery
+  ])
+
+  return {
+    metadata: metaRes.data || null,
+    questions: questionsRes.data || []
+  }
+}
