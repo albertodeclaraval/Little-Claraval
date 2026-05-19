@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { fetchDailyReadings, fetchLiturgicalDay } from './lib/liturgical-api'
 import { fetchSaint, fetchDayReflection, fetchLiturgyHour, fetchRosary, fetchChaplet, fetchAppLinks, fetchDayReadings, getJournalDay, getJournalEntries, saveJournalEntries } from './lib/content'
@@ -31,6 +31,14 @@ var s = {
   journalCard: { backgroundColor: 'white', borderRadius: '8px', padding: '1rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', cursor: 'pointer', borderLeft: '3px solid ' + colors.oro },
   textarea: { width: '100%', minHeight: '200px', border: '1px solid #ddd', borderRadius: '6px', padding: '1rem', fontSize: '0.95rem', lineHeight: 1.8, resize: 'vertical', fontFamily: 'Georgia, serif', boxSizing: 'border-box', color: colors.texto },
   pricingCard: function(h) { return { backgroundColor: h ? colors.vino : 'white', borderRadius: '8px', padding: '1.5rem', marginBottom: '1rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', color: h ? 'white' : colors.texto } },
+}
+
+function lsJournalKey(slug, unit, lang) { return 'journal_' + slug + '_' + unit + '_' + lang }
+function lsJournalLoad(slug, unit, lang) {
+  try { return JSON.parse(localStorage.getItem(lsJournalKey(slug, unit, lang)) || '{}') } catch(e) { return {} }
+}
+function lsJournalSave(slug, unit, lang, answers) {
+  try { localStorage.setItem(lsJournalKey(slug, unit, lang), JSON.stringify(answers)) } catch(e) {}
 }
 
 var JOURNALS = [
@@ -791,6 +799,7 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
   var [metadata, setMetadata] = useState(null)
   var [showDesc, setShowDesc] = useState(true)
   var [patronSaint, setPatronSaint] = useState(null)
+  var debounceRef = useRef(null)
 
   useEffect(function() {
     if (!journal.hasPatronSaint) return
@@ -806,7 +815,7 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
     setSaved(false)
     var entriesPromise = user
       ? getJournalEntries(user.id, journal.slug, currentUnit, 'es')
-      : Promise.resolve([])
+      : Promise.resolve(null)
     Promise.all([
       getJournalDay(journal.slug, currentUnit, 'es', isWeekly),
       entriesPromise
@@ -815,14 +824,23 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
       setMetadata(day.metadata)
       setQuestions(day.questions)
       var a = {}
-      results[1].forEach(function(e) { a[e.question_number || 1] = e.response_text || '' })
+      if (results[1]) {
+        results[1].forEach(function(e) { a[e.question_number || 1] = e.response_text || '' })
+      } else {
+        var lsData = lsJournalLoad(journal.slug, currentUnit, 'es')
+        Object.keys(lsData).forEach(function(k) { a[k] = lsData[k] })
+      }
       setAnswers(a)
       setLoading(false)
     })
   }, [journal.slug, journal.type, currentUnit, user])
 
   async function handleSave() {
-    if (!user) return
+    if (!user) {
+      setSaved(true)
+      setTimeout(function() { setSaved(false) }, 2000)
+      return
+    }
     setSaving(true)
     var saveList = questions.length > 0 ? questions : [{ question_number: 1 }]
     var entries = saveList.map(function(q) {
@@ -885,17 +903,23 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
                         key={journal.slug + '-' + currentUnit + '-' + qn}
                         style={s.textarea}
                         value={answers[qn] || ''}
-                        onChange={function(e) { var val = e.target.value; setAnswers(function(prev) { return Object.assign({}, prev, { [qn]: val }) }) }}
+                        onChange={function(e) {
+                          var val = e.target.value
+                          setAnswers(function(prev) {
+                            var next = Object.assign({}, prev, { [qn]: val })
+                            if (debounceRef.current) clearTimeout(debounceRef.current)
+                            debounceRef.current = setTimeout(function() {
+                              lsJournalSave(journal.slug, currentUnit, 'es', next)
+                            }, 500)
+                            return next
+                          })
+                        }}
                         placeholder="Escribe aqui..."
                       />
                     </div>
                   )
                 })}
-                {user ? (
-                  <button style={s.btn(saved ? colors.verde : colors.vino)} onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : saved ? 'Guardado ✓' : 'Guardar entrada'}</button>
-                ) : (
-                  <p style={{ fontSize: '0.85rem', color: '#888', fontStyle: 'italic', textAlign: 'center', marginTop: '0.75rem' }}>Inicia sesión para guardar tus entradas</p>
-                )}
+                <button style={s.btn(saved ? colors.verde : colors.vino)} onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : saved ? 'Guardado ✓' : 'Guardar entrada'}</button>
                 {metadata && metadata.closing_prayer && (
                   <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f0e8d8' }}>
                     <span style={{ color: colors.vino, marginRight: '0.4rem' }}>✠</span>{metadata.closing_prayer}
@@ -1207,7 +1231,7 @@ function App() {
           setChecking(false)
         }).catch(function() { setChecking(false) })
       } else {
-        window.location.href = '/login'
+        setChecking(false)
       }
     })
 
