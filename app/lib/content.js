@@ -257,6 +257,31 @@ export async function saveJournalEntries(userId, journalSlug, dayNumber, lang, e
   return error
 }
 
+export async function getLiturgicalPosition(date) {
+  try {
+    var d = date instanceof Date ? date : new Date(date + 'T12:00:00')
+    var litDay = await fetchLiturgicalDay(d)
+    if (!litDay) return null
+
+    var weekday = d.getDay()
+    var season = normalizeSeason(litDay.season)
+    var feastKey = getFeastKey(litDay) || ''
+    var week = extractWeek(litDay.celebration && litDay.celebration.name)
+    if (week === null && season === 'easter') week = easterWeek(d)
+    var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
+
+    return {
+      season, feastKey, cycle,
+      week: week !== null ? week : null,
+      weekday,
+      celebrationName: litDay.celebration && litDay.celebration.name,
+      litSeason: litDay.season,
+    }
+  } catch(e) {
+    return null
+  }
+}
+
 export async function getJournalDay(journalSlug, unitNumber, lang, isWeekly) {
   var lg = lang || 'es'
   var contentQuery = supabase

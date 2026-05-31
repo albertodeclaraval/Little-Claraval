@@ -76,6 +76,13 @@ export default function AdminPage() {
           </div>
           <span style={{ color: colors.vino, fontSize: '1.1rem' }}>→</span>
         </a>
+        <a href="/admin/reflexiones" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'white', borderRadius: '8px', padding: '1rem 1.25rem', marginBottom: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', textDecoration: 'none', color: colors.texto }}>
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '0.95rem', color: colors.vino }}>Editor de Reflexiones</div>
+            <div style={{ fontSize: '0.78rem', color: '#888', marginTop: '0.2rem' }}>Editar reflexiones ES/EN por fecha · selector de posición litúrgica</div>
+          </div>
+          <span style={{ color: colors.vino, fontSize: '1.1rem' }}>→</span>
+        </a>
         <a href="/admin/journals" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'white', borderRadius: '8px', padding: '1rem 1.25rem', marginBottom: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', textDecoration: 'none', color: colors.texto }}>
           <div>
             <div style={{ fontWeight: 'bold', fontSize: '0.95rem', color: colors.vino }}>Metadatos de Journals</div>
