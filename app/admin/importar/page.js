@@ -57,9 +57,9 @@ var TABS = [
     label: 'Journals',
     icon: '📓',
     table: 'journal_content',
-    conflict: 'journal_slug, day_number, week_number, lang',
+    conflict: 'journal_slug, day_number, week_number, lang, question_number',
     rows: '5,315',
-    desc: 'journal_slug · day_number · week_number · lang · title · content'
+    desc: 'journal_slug · day_number · week_number · lang · title · content (question_number auto-asignado)'
   },
   {
     name: 'buenas_noches',

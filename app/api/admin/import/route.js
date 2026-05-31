@@ -72,10 +72,14 @@ async function importSantos(rows) {
 //             second_reading_ref, second_reading_text, gospel_ref, gospel_text
 async function importLecturas(rows) {
   var BATCH = 200, total = 0, errors = []
-  var mapped = rows.filter(function(r) {
-    return r.cycle && r.season && r.lang
-  }).map(function(r) {
-    return {
+  var seen = {}, deduped = []
+  var valid = rows.filter(function(r) { return r.cycle && r.season && r.lang })
+  for (var i = 0; i < valid.length; i++) {
+    var r = valid[i]
+    var key = [r.cycle, r.season, toNumOrDefault(r.week,0), toNumOrDefault(r.weekday,0), clean(r.feast_key)||'', r.lang].join('|')
+    if (seen[key]) continue
+    seen[key] = true
+    deduped.push({
       cycle: r.cycle, season: r.season,
       week: toNumOrDefault(r.week, 0), weekday: toNumOrDefault(r.weekday, 0),
       feast_key: clean(r.feast_key) || '', lang: r.lang,
@@ -85,11 +89,11 @@ async function importLecturas(rows) {
       second_reading_ref: clean(r.second_reading_ref), second_reading_text: clean(r.second_reading_text),
       gospel_ref: clean(r.gospel_ref), gospel_text: clean(r.gospel_text),
       updated_at: new Date().toISOString()
-    }
-  })
-  if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
-  for (var i = 0; i < mapped.length; i += BATCH) {
-    var batch = mapped.slice(i, i + BATCH)
+    })
+  }
+  if (deduped.length === 0) return { count: 0, error: 'No hay filas validas' }
+  for (var i = 0; i < deduped.length; i += BATCH) {
+    var batch = deduped.slice(i, i + BATCH)
     var { error } = await supabaseAdmin.from('lectionary').upsert(batch, { onConflict: 'cycle,season,week,weekday,feast_key,lang' })
     if (error) errors.push('batch ' + i + ': ' + error.message)
     else total += batch.length
@@ -98,27 +102,40 @@ async function importLecturas(rows) {
 }
 
 // reflexiones → lectionary_reflections (upsert on cycle,season,week,feast_key,lang)
-// Excel cols: cycle, season, week, feast_key, feast_key (dup), lang, title, liturgical_color,
-//             gospel_ref, gospel_text, silence, meditative_phrase, inner_question,
+// Excel cols: cycle, season, week, weekday, feast_key, lang, title, liturgical_color,
+//             gospel_ref, gospel_text, reflexion, silence, meditative_phrase, inner_question,
 //             brief_prayer, spiritual_school, theme, tags
 async function importReflexiones(rows) {
-  var mapped = rows.filter(function(r) { return r.lang }).map(function(r) {
-    return {
+  var BATCH = 200, total = 0, errors = []
+  var seen = {}, deduped = []
+  var valid = rows.filter(function(r) { return r.lang })
+  for (var i = 0; i < valid.length; i++) {
+    var r = valid[i]
+    var key = [(clean(r.cycle)||''), (clean(r.season)||''), toNumOrDefault(r.week,0), (clean(r.feast_key)||''), r.lang].join('|')
+    if (seen[key]) continue
+    seen[key] = true
+    deduped.push({
       cycle: clean(r.cycle) || '', season: clean(r.season) || '',
       week: toNumOrDefault(r.week, 0), feast_key: clean(r.feast_key) || '',
       lang: r.lang, title: clean(r.title), liturgical_color: clean(r.liturgical_color),
       gospel_ref: clean(r.gospel_ref), gospel_text: clean(r.gospel_text),
+      reflexion: clean(r.reflexion),
       silence: clean(r.silence), meditative_phrase: clean(r.meditative_phrase),
       inner_question: clean(r.inner_question), brief_prayer: clean(r.brief_prayer),
       spiritual_school: clean(r.spiritual_school) || 'bernardina',
       theme: clean(r.theme),
       tags: r.tags ? r.tags.split(',').map(function(t) { return t.trim() }) : [],
       updated_at: new Date().toISOString()
-    }
-  })
-  if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
-  var { error } = await supabaseAdmin.from('lectionary_reflections').upsert(mapped, { onConflict: 'cycle,season,week,feast_key,lang' })
-  return { count: mapped.length, error: error ? error.message : null }
+    })
+  }
+  if (deduped.length === 0) return { count: 0, error: 'No hay filas validas' }
+  for (var i = 0; i < deduped.length; i += BATCH) {
+    var batch = deduped.slice(i, i + BATCH)
+    var { error } = await supabaseAdmin.from('lectionary_reflections').upsert(batch, { onConflict: 'cycle,season,week,feast_key,lang' })
+    if (error) errors.push('batch ' + i + ': ' + error.message)
+    else total += batch.length
+  }
+  return { count: total, error: errors.length > 0 ? errors.join('; ') : null }
 }
 
 // laudes/visperas → liturgy_hours (upsert on hour_type,psalter_week,weekday,season_variant,lang)
@@ -168,16 +185,20 @@ async function importLiturgia(rows, hourType) {
 }
 
 // journals → journal_content (upsert on journal_slug,day_number,week_number,lang,question_number)
-// Excel cols: journal_slug, day_number, week_number, lang, section_type, question_number, title, content
+// Excel cols: journal_slug, day_number, week_number, lang, title, content
+// question_number is auto-assigned sequentially within each (slug,day,week,lang) group if not in Excel
 async function importJournals(rows) {
+  var groupCount = {}
   var mapped = rows.filter(function(r) { return r.journal_slug }).map(function(r) {
+    var key = [r.journal_slug.trim(), r.day_number || '', r.week_number || '', (clean(r.lang) || 'es')].join('|')
+    groupCount[key] = (groupCount[key] || 0) + 1
     return {
       journal_slug: r.journal_slug.trim(),
       day_number: toIntOrNull(r.day_number),
       week_number: toIntOrNull(r.week_number),
       lang: clean(r.lang) || 'es',
       section_type: clean(r.section_type) || 'question',
-      question_number: toIntOrNull(r.question_number) || 1,
+      question_number: toIntOrNull(r.question_number) || groupCount[key],
       title: clean(r.title),
       content: clean(r.content)
     }
