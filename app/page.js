@@ -33,6 +33,131 @@ var s = {
   pricingCard: function(h) { return { backgroundColor: h ? colors.vino : 'white', borderRadius: '8px', padding: '1.5rem', marginBottom: '1rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', color: h ? 'white' : colors.texto } },
 }
 
+// ── Translation tables ──────────────────────────────────────────────────────
+var T = {
+  es: {
+    today: 'Hoy', journals: 'Diarios', plans: 'Planes', redeem: 'Canjear',
+    loading: 'Cargando...', comingSoon: 'Próximamente',
+    readingsOfDay: 'Lecturas del Día',
+    noReadings: 'No se pudieron cargar las lecturas. Verifica tu conexión.',
+    fullTextSoon: 'Texto completo próximamente',
+    firstReading: 'Primera Lectura', psalm: 'Salmo',
+    secondReading: 'Segunda Lectura', gospel: 'Evangelio',
+    reflectionTitle: 'Reflexión — Alberto de Claraval',
+    reflectionInPrep: 'Reflexión en preparación...',
+    premiumBadge: 'PREMIUM — Nivel Peregrino', unlockBtn: 'Desbloquear — $1.99/mes',
+    saintOfDay: 'Santo del Día', noInfo: 'Información no disponible',
+    patronOf: 'Patrono/a de:', canonizedIn: 'Canonizado en', canonizedBy: ' por ',
+    prayerLabel: 'Oración',
+    liturgyHours: 'Liturgia de las Horas',
+    lauds: 'Laudes', morningPrayer: 'Oración de la mañana',
+    vespers: 'Vísperas', afternoonPrayer: 'Oración de la tarde',
+    compline: 'Completas', nightPrayer: 'Oración de la noche',
+    rosaryOfDay: 'Rosario del Día', chapletTitle: 'Coronilla de la Divina Misericordia',
+    howToPrayRosary: 'Cómo rezar el Rosario',
+    mysteries5: 'Los 5 Misterios', fruit: 'Fruto:',
+    viewFullPrayers: 'Ver oraciones completas',
+    howToPrayChaplet: 'Cómo rezarla',
+    openingPrayers: 'Oraciones Iniciales',
+    largeBead: 'En las cuentas grandes', smallBead: 'En las cuentas pequeñas',
+    repeatThrice: '(repetir 3 veces)',
+    myJournals: 'Mis Diarios', journalSubtitle: 'Diarios de oración y examen',
+    locked: 'Bloqueado', dayLabel: 'Día', weekLabel: 'Semana',
+    patronSaint: 'Santo Patrono',
+    save: 'Guardar entrada', saving: 'Guardando...', saved: 'Guardado ✓',
+    writeHere: 'Escribe aqui...', back: 'Volver',
+    prev: '← Anterior', next: 'Siguiente →',
+    aboutJournal: 'ℹ️ Sobre este diario',
+    planSubtitle: 'El contenido liturgico siempre es gratuito.',
+    freeBadge: 'Gratuito', freePlanName: 'Cuenta Gratuita',
+    freeDesc: 'Evangelio - Santo del dia - Laudes - Liturgia de las Horas - Rosario - Coronilla',
+    currentPlan: 'Tu plan actual', included: 'Incluido', subscribe: 'Suscribirse',
+    redeemPageTitle: 'Canjear codigo',
+    redeemPageDesc: 'Si tienes un codigo promocional o de un journal fisico, ingresalo aqui.',
+    redeemBtn: 'Canjear', redeeming: 'Canjeando...', signOut: 'Salir',
+    rosarySteps: [
+      'Señal de la Cruz', 'Credo',
+      '1 Padrenuestro + 3 Ave Marías + Gloria',
+      'Anunciar cada misterio — 1 Padrenuestro + 10 Ave Marías + Gloria + Oración de Fátima',
+      'Salve + Oración final',
+    ],
+    prayerLabels: {
+      sign_of_cross: 'Señal de la Cruz', apostles_creed: 'Credo',
+      our_father: 'Padrenuestro', hail_mary: 'Ave María',
+      glory_be: 'Gloria', fatima_prayer: 'Oración de Fátima',
+      hail_holy_queen: 'Salve', final_prayer: 'Oración Final',
+    },
+    coronillaItems: [
+      { key: 'sign_of_cross', label: 'Señal de la Cruz' },
+      { key: 'opening_prayer', label: 'Oración Inicial' },
+      { key: 'our_father', label: 'Padrenuestro' },
+      { key: 'hail_mary', label: 'Ave María' },
+      { key: 'apostles_creed', label: 'Credo' },
+    ],
+  },
+  en: {
+    today: 'Today', journals: 'Journals', plans: 'Plans', redeem: 'Redeem',
+    loading: 'Loading...', comingSoon: 'Coming soon',
+    readingsOfDay: 'Daily Readings',
+    noReadings: 'Could not load readings. Check your connection.',
+    fullTextSoon: 'Full text coming soon',
+    firstReading: 'First Reading', psalm: 'Psalm',
+    secondReading: 'Second Reading', gospel: 'Gospel',
+    reflectionTitle: 'Reflection — Alberto de Claraval',
+    reflectionInPrep: 'Reflection in preparation...',
+    premiumBadge: 'PREMIUM — Peregrino Level', unlockBtn: 'Unlock — $1.99/mo',
+    saintOfDay: 'Saint of the Day', noInfo: 'Information not available',
+    patronOf: 'Patron of:', canonizedIn: 'Canonized in', canonizedBy: ' by ',
+    prayerLabel: 'Prayer',
+    liturgyHours: 'Liturgy of the Hours',
+    lauds: 'Lauds', morningPrayer: 'Morning prayer',
+    vespers: 'Vespers', afternoonPrayer: 'Evening prayer',
+    compline: 'Compline', nightPrayer: 'Night prayer',
+    rosaryOfDay: 'Rosary of the Day', chapletTitle: 'Divine Mercy Chaplet',
+    howToPrayRosary: 'How to pray the Rosary',
+    mysteries5: 'The 5 Mysteries', fruit: 'Fruit:',
+    viewFullPrayers: 'View full prayers',
+    howToPrayChaplet: 'How to pray it',
+    openingPrayers: 'Opening Prayers',
+    largeBead: 'On large beads', smallBead: 'On small beads',
+    repeatThrice: '(repeat 3 times)',
+    myJournals: 'My Journals', journalSubtitle: 'Prayer and examination journals',
+    locked: 'Locked', dayLabel: 'Day', weekLabel: 'Week',
+    patronSaint: 'Patron Saint',
+    save: 'Save entry', saving: 'Saving...', saved: 'Saved ✓',
+    writeHere: 'Write here...', back: 'Back',
+    prev: '← Previous', next: 'Next →',
+    aboutJournal: 'ℹ️ About this journal',
+    planSubtitle: 'Liturgical content is always free.',
+    freeBadge: 'Free', freePlanName: 'Free Account',
+    freeDesc: 'Gospel - Saint of the day - Lauds - Liturgy of the Hours - Rosary - Chaplet',
+    currentPlan: 'Your current plan', included: 'Included', subscribe: 'Subscribe',
+    redeemPageTitle: 'Redeem code',
+    redeemPageDesc: 'If you have a promotional code or from a physical journal, enter it here.',
+    redeemBtn: 'Redeem', redeeming: 'Redeeming...', signOut: 'Sign out',
+    rosarySteps: [
+      'Sign of the Cross', "Apostles' Creed",
+      '1 Our Father + 3 Hail Marys + Glory Be',
+      'Announce each mystery — 1 Our Father + 10 Hail Marys + Glory Be + Fatima Prayer',
+      'Hail Holy Queen + Final Prayer',
+    ],
+    prayerLabels: {
+      sign_of_cross: 'Sign of the Cross', apostles_creed: "Apostles' Creed",
+      our_father: 'Our Father', hail_mary: 'Hail Mary',
+      glory_be: 'Glory Be', fatima_prayer: 'Fatima Prayer',
+      hail_holy_queen: 'Hail Holy Queen', final_prayer: 'Final Prayer',
+    },
+    coronillaItems: [
+      { key: 'sign_of_cross', label: 'Sign of the Cross' },
+      { key: 'opening_prayer', label: 'Opening Prayer' },
+      { key: 'our_father', label: 'Our Father' },
+      { key: 'hail_mary', label: 'Hail Mary' },
+      { key: 'apostles_creed', label: "Apostles' Creed" },
+    ],
+  },
+}
+
+// ── Journal helpers ─────────────────────────────────────────────────────────
 function lsJournalKey(slug, unit, lang) { return 'journal_' + slug + '_' + unit + '_' + lang }
 function lsJournalLoad(slug, unit, lang) {
   try { return JSON.parse(localStorage.getItem(lsJournalKey(slug, unit, lang)) || '{}') } catch(e) { return {} }
@@ -77,6 +202,13 @@ var SEASON_ES = {
   pentecost: 'Pentecostés'
 }
 
+var SEASON_EN = {
+  easter: 'Easter Season', christmas: 'Christmas',
+  advent: 'Advent', lent: 'Lent',
+  'ordinary time': 'Ordinary Time', ordinary: 'Ordinary Time',
+  pentecost: 'Pentecost'
+}
+
 var CELEBRATION_TYPE_ES = {
   'SUNDAY': 'Domingo', 'MONDAY': 'Lunes', 'TUESDAY': 'Martes',
   'WEDNESDAY': 'Miércoles', 'THURSDAY': 'Jueves', 'FRIDAY': 'Viernes',
@@ -85,9 +217,18 @@ var CELEBRATION_TYPE_ES = {
   'OPTIONAL_MEMORIAL': 'Memoria Opcional', 'SOLEMNITY': 'Solemnidad', 'FERIA': 'Feria'
 }
 
-function translateCelebration(type) {
+var CELEBRATION_TYPE_EN = {
+  'SUNDAY': 'Sunday', 'MONDAY': 'Monday', 'TUESDAY': 'Tuesday',
+  'WEDNESDAY': 'Wednesday', 'THURSDAY': 'Thursday', 'FRIDAY': 'Friday',
+  'SATURDAY': 'Saturday', 'FEAST': 'Feast', 'FEAST OF THE LORD': 'Feast of the Lord',
+  'MEMORIAL': 'Memorial', 'OPTIONAL MEMORIAL': 'Optional Memorial',
+  'OPTIONAL_MEMORIAL': 'Optional Memorial', 'SOLEMNITY': 'Solemnity', 'FERIA': 'Feria'
+}
+
+function translateCelebration(type, lang) {
   if (!type) return ''
-  return CELEBRATION_TYPE_ES[type.toUpperCase()] || type
+  var map = lang === 'en' ? CELEBRATION_TYPE_EN : CELEBRATION_TYPE_ES
+  return map[type.toUpperCase()] || type
 }
 
 var ROSARY_NAMES = {
@@ -95,6 +236,13 @@ var ROSARY_NAMES = {
   2: 'Misterios Dolorosos', 3: 'Misterios Gloriosos',
   4: 'Misterios Luminosos', 5: 'Misterios Dolorosos',
   6: 'Misterios Gozosos'
+}
+
+var ROSARY_NAMES_EN = {
+  0: 'Glorious Mysteries', 1: 'Joyful Mysteries',
+  2: 'Sorrowful Mysteries', 3: 'Glorious Mysteries',
+  4: 'Luminous Mysteries', 5: 'Sorrowful Mysteries',
+  6: 'Joyful Mysteries'
 }
 
 var ROSARY_NAMES_LATIN = {
@@ -113,15 +261,19 @@ function getSeasonColor(season) {
   return colors.verde
 }
 
-function getSeasonEs(season) {
-  if (!season) return 'Tiempo Ordinario'
+function getSeasonLabel(season, lang) {
+  if (!season) return lang === 'en' ? 'Ordinary Time' : 'Tiempo Ordinario'
   var s = season.toLowerCase()
-  for (var key in SEASON_ES) {
-    if (s.includes(key)) return SEASON_ES[key]
+  var map = lang === 'en' ? SEASON_EN : SEASON_ES
+  for (var key in map) {
+    if (s.includes(key)) return map[key]
   }
   return season
 }
 
+var MYSTERY_CIRCLES = ['①', '②', '③', '④', '⑤']
+
+// ── Base UI components ──────────────────────────────────────────────────────
 function Accordion({ title, isOpen, onToggle, highlight, children }) {
   return (
     <div style={{ marginBottom: '0.25rem' }}>
@@ -141,17 +293,19 @@ function Accordion({ title, isOpen, onToggle, highlight, children }) {
   )
 }
 
-function Proximamente() {
-  return <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Próximamente</p>
+function Proximamente({ t }) {
+  return <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>{t.comingSoon}</p>
 }
 
+// ── Shared prayer styles ─────────────────────────────────────────────────────
 var prayerSectionHeader = { fontSize: '0.78rem', fontWeight: 'bold', color: '#782F40', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 0.5rem' }
 var prayerBodyText = { lineHeight: 1.8, fontSize: '0.9rem', color: '#444', margin: '0 0 0.3rem' }
 var prayerLatinText = { fontStyle: 'italic', color: '#aaa', fontSize: '0.85rem', margin: 0 }
 var prayerLabel = { fontSize: '0.72rem', color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.2rem' }
 var prayerDivider = { borderTop: '1px solid #e8dcc8', margin: '0.9rem 0' }
 
-function CoronillaContent({ chaplet }) {
+// ── Coronilla ────────────────────────────────────────────────────────────────
+function CoronillaContent({ chaplet, t }) {
   var [showInstructions, setShowInstructions] = useState(false)
   var c = chaplet && chaplet.content
   if (!c || typeof c !== 'object') {
@@ -165,14 +319,8 @@ function CoronillaContent({ chaplet }) {
       {c.opening_prayers && (
         <>
           <div style={prayerDivider} />
-          <p style={prayerSectionHeader}>Oraciones Iniciales</p>
-          {[
-            { key: 'sign_of_cross', label: 'Señal de la Cruz' },
-            { key: 'opening_prayer', label: 'Oración Inicial' },
-            { key: 'our_father', label: 'Padrenuestro' },
-            { key: 'hail_mary', label: 'Ave María' },
-            { key: 'apostles_creed', label: 'Credo' },
-          ].map(function(item) {
+          <p style={prayerSectionHeader}>{t.openingPrayers}</p>
+          {t.coronillaItems.map(function(item) {
             var text = c.opening_prayers[item.key]
             if (!text) return null
             return (
@@ -188,7 +336,7 @@ function CoronillaContent({ chaplet }) {
       {c.eternal_father && (
         <>
           <div style={prayerDivider} />
-          <p style={prayerSectionHeader}>En las cuentas grandes</p>
+          <p style={prayerSectionHeader}>{t.largeBead}</p>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
             <span style={{ fontSize: '1.1rem', color: '#782F40', flexShrink: 0, lineHeight: 1.65 }}>●</span>
             <p style={prayerBodyText}>{c.eternal_father}</p>
@@ -199,7 +347,7 @@ function CoronillaContent({ chaplet }) {
       {c.small_bead && (
         <>
           <div style={prayerDivider} />
-          <p style={prayerSectionHeader}>En las cuentas pequeñas</p>
+          <p style={prayerSectionHeader}>{t.smallBead}</p>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.7rem', color: '#3C5078', flexShrink: 0, lineHeight: 2.6, letterSpacing: '0.15em' }}>○○○</span>
             <p style={prayerBodyText}>{c.small_bead}</p>
@@ -215,7 +363,7 @@ function CoronillaContent({ chaplet }) {
               <p style={prayerSectionHeader}>
                 Al finalizar{' '}
                 <span style={{ fontStyle: 'italic', textTransform: 'none', fontWeight: 'normal', letterSpacing: 0 }}>
-                  (repetir 3 veces)
+                  {t.repeatThrice}
                 </span>
               </p>
               <p style={prayerBodyText}>{c.closing.holy_god}</p>
@@ -223,7 +371,7 @@ function CoronillaContent({ chaplet }) {
           )}
           {c.closing.final_prayer && (
             <div>
-              <p style={prayerSectionHeader}>Oración Final</p>
+              <p style={prayerSectionHeader}>{t.prayerLabels.final_prayer}</p>
               <p style={prayerBodyText}>{c.closing.final_prayer}</p>
             </div>
           )}
@@ -238,7 +386,7 @@ function CoronillaContent({ chaplet }) {
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#4B643C', fontSize: '0.82rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >
             <span>{showInstructions ? '▾' : '▸'}</span>
-            <span>Cómo rezarla</span>
+            <span>{t.howToPrayChaplet}</span>
           </button>
           {showInstructions && (
             <ol style={{ margin: '0.6rem 0 0', paddingLeft: '1.3rem' }}>
@@ -253,24 +401,17 @@ function CoronillaContent({ chaplet }) {
   )
 }
 
-var PRAYER_LABELS = {
-  sign_of_cross: 'Señal de la Cruz', apostles_creed: 'Credo',
-  our_father: 'Padrenuestro', hail_mary: 'Ave María',
-  glory_be: 'Gloria', fatima_prayer: 'Oración de Fátima',
-  hail_holy_queen: 'Salve', final_prayer: 'Oración Final'
-}
-
-var MYSTERY_CIRCLES = ['①', '②', '③', '④', '⑤']
-
-function RosarioContent({ rosary, weekday }) {
+// ── Rosario ──────────────────────────────────────────────────────────────────
+function RosarioContent({ rosary, weekday, t, lang }) {
   var [showInstructions, setShowInstructions] = useState(false)
   var [showPrayers, setShowPrayers] = useState(false)
 
-  if (!rosary) return <Proximamente />
+  if (!rosary) return <Proximamente t={t} />
 
   var mysteries = rosary.mysteries
   var prayers = rosary.prayers
-  var setName = ROSARY_NAMES[weekday] || 'Rosario'
+  var nameMap = lang === 'en' ? ROSARY_NAMES_EN : ROSARY_NAMES
+  var setName = nameMap[weekday] || 'Rosario'
   var setNameLatin = ROSARY_NAMES_LATIN[weekday] || ''
 
   return (
@@ -278,34 +419,26 @@ function RosarioContent({ rosary, weekday }) {
       <h3 style={{ fontSize: '1rem', color: '#2C1810', margin: '0 0 0.2rem', fontWeight: 'bold' }}>{setName}</h3>
       {setNameLatin && <p style={{ fontStyle: 'italic', color: '#aaa', fontSize: '0.83rem', margin: '0 0 0.9rem' }}>{setNameLatin}</p>}
 
-      {/* Cómo rezar — colapsable */}
       <div style={{ marginBottom: '1rem' }}>
         <button
           onClick={function() { setShowInstructions(function(v) { return !v }) }}
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#4B643C', fontSize: '0.82rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
         >
           <span>{showInstructions ? '▾' : '▸'}</span>
-          <span>Cómo rezar el Rosario</span>
+          <span>{t.howToPrayRosary}</span>
         </button>
         {showInstructions && (
           <ol style={{ margin: '0.6rem 0 0', paddingLeft: '1.3rem', backgroundColor: '#fdf8f0', borderRadius: '6px', padding: '0.7rem 0.7rem 0.7rem 2rem' }}>
-            {[
-              'Señal de la Cruz',
-              'Credo',
-              '1 Padrenuestro + 3 Ave Marías + Gloria',
-              'Anunciar cada misterio — 1 Padrenuestro + 10 Ave Marías + Gloria + Oración de Fátima',
-              'Salve + Oración final',
-            ].map(function(step, i) {
+            {t.rosarySteps.map(function(step, i) {
               return <li key={i} style={{ fontSize: '0.86rem', color: '#555', lineHeight: 1.7, marginBottom: '0.3rem' }}>{step}</li>
             })}
           </ol>
         )}
       </div>
 
-      {/* Los 5 Misterios */}
       {mysteries && Array.isArray(mysteries) && mysteries.length > 0 && (
         <div>
-          <p style={prayerSectionHeader}>Los 5 Misterios</p>
+          <p style={prayerSectionHeader}>{t.mysteries5}</p>
           {mysteries.map(function(m, i) {
             var circle = MYSTERY_CIRCLES[i] || String(i + 1)
             return (
@@ -325,7 +458,7 @@ function RosarioContent({ rosary, weekday }) {
                 )}
                 {m.fruit && (
                   <p style={{ fontSize: '0.8rem', margin: '0 0 0 1.6rem' }}>
-                    <span style={{ color: '#bbb', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fruto: </span>
+                    <span style={{ color: '#bbb', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.fruit} </span>
                     <span style={{ fontStyle: 'italic', color: '#666' }}>{m.fruit}</span>
                     {m.fruit_latin && <span style={{ fontStyle: 'italic', color: '#bbb', fontSize: '0.78rem' }}> / {m.fruit_latin}</span>}
                   </p>
@@ -336,7 +469,6 @@ function RosarioContent({ rosary, weekday }) {
         </div>
       )}
 
-      {/* Oraciones — colapsable */}
       {prayers && typeof prayers === 'object' && (
         <div style={{ borderTop: '1px solid #e8dcc8', paddingTop: '0.75rem' }}>
           <button
@@ -344,14 +476,14 @@ function RosarioContent({ rosary, weekday }) {
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#4B643C', fontSize: '0.82rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >
             <span>{showPrayers ? '▾' : '▸'}</span>
-            <span>Ver oraciones completas</span>
+            <span>{t.viewFullPrayers}</span>
           </button>
           {showPrayers && (
             <div style={{ marginTop: '0.75rem' }}>
               {Object.keys(prayers).map(function(key) {
                 var val = prayers[key]
                 if (!val) return null
-                var label = PRAYER_LABELS[key] || key
+                var label = t.prayerLabels[key] || key
                 var vernacular = typeof val === 'string' ? val : val.vernacular
                 var latin = typeof val === 'object' ? val.latin : null
                 return (
@@ -370,7 +502,9 @@ function RosarioContent({ rosary, weekday }) {
   )
 }
 
-function ViewHoy({ tier, onSwitchView }) {
+// ── ViewHoy ──────────────────────────────────────────────────────────────────
+function ViewHoy({ tier, onSwitchView, lang }) {
+  var t = T[lang] || T.es
   var canReflection = (TIER_LEVELS[tier] || 0) >= 1
 
   var today = new Date()
@@ -393,34 +527,25 @@ function ViewHoy({ tier, onSwitchView }) {
   var [supabaseReadings, setSupabaseReadings] = useState(null)
   var [loading, setLoading] = useState(true)
   var [open, setOpen] = useState({
-    lecturas: false,
-    primera: false,
-    salmo: false,
-    segunda: false,
-    evangelio: false,
-    reflexion: false,
-    santo: false,
-    liturgia: false,
-    laudes: false,
-    visperas: false,
-    completas: false,
-    rosario: false,
-    coronilla: false
+    lecturas: false, primera: false, salmo: false, segunda: false, evangelio: false,
+    reflexion: false, santo: false, liturgia: false, laudes: false,
+    visperas: false, completas: false, rosario: false, coronilla: false
   })
 
   useEffect(function() {
+    setLoading(true)
     Promise.all([
       fetchDailyReadings(today),
       fetchLiturgicalDay(today),
       fetchSaint(monthDay),
-      fetchDayReflection(dateStr, 'es'),
-      fetchLiturgyHour('lauds', 1, weekday, 'ordinary', 'es'),
-      fetchLiturgyHour('vespers', 1, weekday, 'ordinary', 'es'),
-      fetchLiturgyHour('compline', 1, weekday, 'ordinary', 'es'),
-      fetchRosary(weekday, 'es'),
-      fetchChaplet('es'),
+      fetchDayReflection(dateStr, lang),
+      fetchLiturgyHour('lauds', 1, weekday, 'ordinary', lang),
+      fetchLiturgyHour('vespers', 1, weekday, 'ordinary', lang),
+      fetchLiturgyHour('compline', 1, weekday, 'ordinary', lang),
+      fetchRosary(weekday, lang),
+      fetchChaplet(lang),
       fetchAppLinks(),
-      fetchDayReadings(dateStr)
+      fetchDayReadings(dateStr, lang)
     ]).then(function(r) {
       setReadings(r[0])
       setLitDay(r[1])
@@ -433,7 +558,7 @@ function ViewHoy({ tier, onSwitchView }) {
       setSupabaseReadings(r[10])
       setLoading(false)
     })
-  }, [])
+  }, [lang])
 
   function toggle(key) {
     setOpen(function(prev) { return Object.assign({}, prev, { [key]: !prev[key] }) })
@@ -441,7 +566,7 @@ function ViewHoy({ tier, onSwitchView }) {
 
   var season = (readings && readings.season) || (litDay && litDay.season) || ''
   var seasonColor = getSeasonColor(season)
-  var seasonEs = getSeasonEs(season)
+  var seasonLabel = getSeasonLabel(season, lang)
   var celebration = litDay && litDay.celebration
   var rd = readings && readings.readings
 
@@ -450,8 +575,19 @@ function ViewHoy({ tier, onSwitchView }) {
   var mergedSecond = { ref: (supabaseReadings && supabaseReadings.second_reading_ref)  || (rd && rd.secondReading),  text: supabaseReadings && supabaseReadings.second_reading_text }
   var mergedGospel = { ref: (supabaseReadings && supabaseReadings.gospel_ref)          || (rd && rd.gospel),         text: supabaseReadings && supabaseReadings.gospel_text }
 
+  // Saint fields: prefer lang-specific, fall back to ES
+  var saintName = saint
+    ? (lang === 'en' ? (saint.name_en || saint.name_es) : saint.name_es)
+    : (celebration && celebration.name)
+  var saintBio = saint
+    ? (lang === 'en' ? (saint.bio_en || saint.bio_es) : saint.bio_es)
+    : (celebration && celebration.description)
+  var saintPrayer = saint ? (lang === 'en' ? (saint.prayer_en || saint.prayer_es) : saint.prayer_es) : null
+  var saintPatronage = saint ? (lang === 'en' ? (saint.patronage_en || saint.patronage_es) : saint.patronage_es) : null
+  var saintFeastDay = saint ? (lang === 'en' ? (saint.feast_day_en || saint.feast_day_es) : saint.feast_day_es) : null
+
   if (loading) {
-    return <div style={Object.assign({}, s.content, { textAlign: 'center', color: '#aaa', paddingTop: '3rem' })}>Cargando...</div>
+    return <div style={Object.assign({}, s.content, { textAlign: 'center', color: '#aaa', paddingTop: '3rem' })}>{t.loading}</div>
   }
 
   return (
@@ -459,10 +595,10 @@ function ViewHoy({ tier, onSwitchView }) {
 
       {/* Encabezado litúrgico */}
       <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <div style={s.badge(seasonColor)}>{seasonEs}</div>
+        <div style={s.badge(seasonColor)}>{seasonLabel}</div>
         {celebration && celebration.type && (
           <div style={{ fontSize: '0.72rem', color: '#999', marginTop: '0.35rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-            {translateCelebration(celebration.type)}
+            {translateCelebration(celebration.type, lang)}
           </div>
         )}
       </div>
@@ -473,41 +609,39 @@ function ViewHoy({ tier, onSwitchView }) {
           onClick={function() { toggle('lecturas') }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.lecturas ? '0.25rem' : 0 }}
         >
-          <div style={s.cardTitle}>Lecturas del Día</div>
+          <div style={s.cardTitle}>{t.readingsOfDay}</div>
           <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.lecturas ? '▾' : '▸'}</span>
         </div>
         {open.lecturas && (!mergedFirst.ref && !mergedPsalm.ref && !mergedGospel.ref ? (
-          <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>
-            No se pudieron cargar las lecturas. Verifica tu conexión.
-          </p>
+          <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>{t.noReadings}</p>
         ) : (
           <>
             {mergedFirst.ref && (
-              <Accordion title={'Primera Lectura — ' + mergedFirst.ref} isOpen={open.primera} onToggle={function() { toggle('primera') }}>
+              <Accordion title={t.firstReading + ' — ' + mergedFirst.ref} isOpen={open.primera} onToggle={function() { toggle('primera') }}>
                 {mergedFirst.text
                   ? <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{mergedFirst.text}</p>
-                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>}
+                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>{t.fullTextSoon}</p>}
               </Accordion>
             )}
             {mergedPsalm.ref && (
-              <Accordion title={'Salmo — ' + mergedPsalm.ref} isOpen={open.salmo} onToggle={function() { toggle('salmo') }}>
+              <Accordion title={t.psalm + ' — ' + mergedPsalm.ref} isOpen={open.salmo} onToggle={function() { toggle('salmo') }}>
                 {mergedPsalm.text
                   ? <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{mergedPsalm.text}</p>
-                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>}
+                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>{t.fullTextSoon}</p>}
               </Accordion>
             )}
             {mergedSecond.ref && (
-              <Accordion title={'Segunda Lectura — ' + mergedSecond.ref} isOpen={open.segunda} onToggle={function() { toggle('segunda') }}>
+              <Accordion title={t.secondReading + ' — ' + mergedSecond.ref} isOpen={open.segunda} onToggle={function() { toggle('segunda') }}>
                 {mergedSecond.text
                   ? <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{mergedSecond.text}</p>
-                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>}
+                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>{t.fullTextSoon}</p>}
               </Accordion>
             )}
             {mergedGospel.ref && (
-              <Accordion title={'Evangelio — ' + mergedGospel.ref} isOpen={open.evangelio} onToggle={function() { toggle('evangelio') }} highlight={true}>
+              <Accordion title={t.gospel + ' — ' + mergedGospel.ref} isOpen={open.evangelio} onToggle={function() { toggle('evangelio') }} highlight={true}>
                 {mergedGospel.text
                   ? <p style={{ lineHeight: 1.9, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{mergedGospel.text}</p>
-                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>}
+                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>{t.fullTextSoon}</p>}
               </Accordion>
             )}
           </>
@@ -520,11 +654,11 @@ function ViewHoy({ tier, onSwitchView }) {
           onClick={function() { toggle('reflexion') }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.reflexion ? '0.75rem' : 0 }}
         >
-          <div style={s.cardTitle}>Reflexión — Alberto de Claraval</div>
+          <div style={s.cardTitle}>{t.reflectionTitle}</div>
           <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.reflexion ? '▾' : '▸'}</span>
         </div>
         {open.reflexion && (!reflection ? (
-          <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Reflexión en preparación...</p>
+          <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>{t.reflectionInPrep}</p>
         ) : canReflection ? (
           <div>
             {reflection.gospel_ref && (
@@ -556,20 +690,20 @@ function ViewHoy({ tier, onSwitchView }) {
                 )}
               </>
             ) : (
-              <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Reflexión en preparación...</p>
+              <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>{t.reflectionInPrep}</p>
             )}
           </div>
         ) : (
           <>
             <div style={Object.assign({}, s.badge(colors.vino), { fontSize: '0.7rem', marginBottom: '0.75rem' })}>
-              PREMIUM — Nivel Peregrino
+              {t.premiumBadge}
             </div>
             <p style={Object.assign({}, s.p, { filter: 'blur(4px)', userSelect: 'none' })}>
               El silencio es el umbral de la contemplación. En él, Dios habla al corazón sin palabras.
               Detente un momento antes de comenzar el día y deja que la Palabra resuene en ti.
             </p>
             <button style={Object.assign({}, s.btn(colors.vino), { marginTop: '1rem' })} onClick={function() { onSwitchView && onSwitchView('precios') }}>
-              Desbloquear — $1.99/mes
+              {t.unlockBtn}
             </button>
           </>
         ))}
@@ -581,22 +715,22 @@ function ViewHoy({ tier, onSwitchView }) {
           onClick={function() { toggle('santo') }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.santo ? '0.75rem' : 0 }}
         >
-          <div style={s.cardTitle}>Santo del Día</div>
+          <div style={s.cardTitle}>{t.saintOfDay}</div>
           <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.santo ? '▾' : '▸'}</span>
         </div>
         {open.santo && (!celebration && !saint ? (
-          <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Información no disponible</p>
+          <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>{t.noInfo}</p>
         ) : (
           <>
             <h2 style={Object.assign({}, s.h1, { fontSize: '1.1rem', marginBottom: '0.2rem' })}>
-              {saint ? (saint.name_es || (celebration && celebration.name)) : (celebration && celebration.name)}
+              {saintName}
             </h2>
-            {saint && saint.feast_day_es && (
-              <div style={{ fontSize: '0.78rem', color: colors.oro, marginBottom: '0.2rem' }}>{saint.feast_day_es}</div>
+            {saintFeastDay && (
+              <div style={{ fontSize: '0.78rem', color: colors.oro, marginBottom: '0.2rem' }}>{saintFeastDay}</div>
             )}
             {celebration && celebration.type && (
               <div style={{ fontSize: '0.72rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                {translateCelebration(celebration.type)}
+                {translateCelebration(celebration.type, lang)}
               </div>
             )}
             {saint && (saint.birth_year || saint.death_year) && (
@@ -606,26 +740,22 @@ function ViewHoy({ tier, onSwitchView }) {
                   : saint.birth_year ? 'n. ' + saint.birth_year : '† ' + saint.death_year}
               </div>
             )}
-            {saint && saint.bio_es ? (
-              <p style={s.p}>{saint.bio_es}</p>
-            ) : celebration && celebration.description ? (
-              <p style={s.p}>{celebration.description}</p>
-            ) : null}
-            {saint && saint.patronage_es && (
+            {saintBio && <p style={s.p}>{saintBio}</p>}
+            {saintPatronage && (
               <p style={Object.assign({}, s.p, { fontStyle: 'italic', color: '#777', marginTop: '0.5rem', fontSize: '0.85rem' })}>
-                Patrono/a de: {saint.patronage_es}
+                {t.patronOf} {saintPatronage}
               </p>
             )}
             {saint && (saint.canonization_year || saint.canonized_by) && (
               <p style={{ fontSize: '0.78rem', color: '#999', marginTop: '0.5rem' }}>
-                Canonizado{saint.canonization_year ? ' en ' + saint.canonization_year : ''}
-                {saint.canonized_by ? ' por ' + saint.canonized_by : ''}
+                {t.canonizedIn}{saint.canonization_year ? ' ' + saint.canonization_year : ''}
+                {saint.canonized_by ? t.canonizedBy + saint.canonized_by : ''}
               </p>
             )}
-            {saint && saint.prayer_es && (
+            {saintPrayer && (
               <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e8dcc8' }}>
-                <div style={{ fontSize: '0.68rem', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>Oración</div>
-                <p style={Object.assign({}, s.p, { fontStyle: 'italic' })}>{saint.prayer_es}</p>
+                <div style={{ fontSize: '0.68rem', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>{t.prayerLabel}</div>
+                <p style={Object.assign({}, s.p, { fontStyle: 'italic' })}>{saintPrayer}</p>
               </div>
             )}
           </>
@@ -638,39 +768,39 @@ function ViewHoy({ tier, onSwitchView }) {
           onClick={function() { toggle('liturgia') }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.liturgia ? '0.25rem' : 0 }}
         >
-          <div style={s.cardTitle}>Liturgia de las Horas</div>
+          <div style={s.cardTitle}>{t.liturgyHours}</div>
           <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.liturgia ? '▾' : '▸'}</span>
         </div>
         {open.liturgia && <>
           <Accordion
-            title={'Laudes' + (hour >= 5 && hour < 12 ? ' · Oración de la mañana' : '')}
+            title={t.lauds + (hour >= 5 && hour < 12 ? ' · ' + t.morningPrayer : '')}
             isOpen={open.laudes}
             onToggle={function() { toggle('laudes') }}
             highlight={hour >= 5 && hour < 12}
           >
             {lh.laudes && lh.laudes.content
               ? <LiturgiaContent data={lh.laudes} />
-              : <Proximamente />}
+              : <Proximamente t={t} />}
           </Accordion>
           <Accordion
-            title={'Vísperas' + (hour >= 12 && hour < 20 ? ' · Oración de la tarde' : '')}
+            title={t.vespers + (hour >= 12 && hour < 20 ? ' · ' + t.afternoonPrayer : '')}
             isOpen={open.visperas}
             onToggle={function() { toggle('visperas') }}
             highlight={hour >= 12 && hour < 20}
           >
             {lh.visperas && lh.visperas.content
               ? <LiturgiaContent data={lh.visperas} />
-              : <Proximamente />}
+              : <Proximamente t={t} />}
           </Accordion>
           <Accordion
-            title={'Completas' + ((hour >= 20 || hour < 5) ? ' · Oración de la noche' : '')}
+            title={t.compline + ((hour >= 20 || hour < 5) ? ' · ' + t.nightPrayer : '')}
             isOpen={open.completas}
             onToggle={function() { toggle('completas') }}
             highlight={hour >= 20 || hour < 5}
           >
             {lh.completas && lh.completas.content
               ? <LiturgiaContent data={lh.completas} />
-              : <Proximamente />}
+              : <Proximamente t={t} />}
           </Accordion>
         </>}
       </div>
@@ -681,10 +811,12 @@ function ViewHoy({ tier, onSwitchView }) {
           onClick={function() { toggle('rosario') }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.rosario ? '0.75rem' : 0 }}
         >
-          <div style={s.cardTitle}>Rosario del Día</div>
+          <div style={s.cardTitle}>{t.rosaryOfDay}</div>
           <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.rosario ? '▾' : '▸'}</span>
         </div>
-        {open.rosario && (rosary ? <RosarioContent rosary={rosary} weekday={weekday} /> : <Proximamente />)}
+        {open.rosario && (rosary
+          ? <RosarioContent rosary={rosary} weekday={weekday} t={t} lang={lang} />
+          : <Proximamente t={t} />)}
       </div>
 
       {/* F) Coronilla */}
@@ -693,10 +825,10 @@ function ViewHoy({ tier, onSwitchView }) {
           onClick={function() { toggle('coronilla') }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open.coronilla ? '0.75rem' : 0 }}
         >
-          <div style={s.cardTitle}>Coronilla de la Divina Misericordia</div>
+          <div style={s.cardTitle}>{t.chapletTitle}</div>
           <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.coronilla ? '▾' : '▸'}</span>
         </div>
-        {open.coronilla && (chaplet ? <CoronillaContent chaplet={chaplet} /> : <Proximamente />)}
+        {open.coronilla && (chaplet ? <CoronillaContent chaplet={chaplet} t={t} /> : <Proximamente t={t} />)}
       </div>
 
       {/* G) Links Via Claraval */}
@@ -716,7 +848,7 @@ function ViewHoy({ tier, onSwitchView }) {
                   style={{ color: colors.vino, textDecoration: 'none', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
                 >
                   {link.icon && <span>{link.icon}</span>}
-                  <span>{link.label_es || link.label_en}</span>
+                  <span>{lang === 'en' ? (link.label_en || link.label_es) : (link.label_es || link.label_en)}</span>
                 </a>
               )
             })}
@@ -728,10 +860,13 @@ function ViewHoy({ tier, onSwitchView }) {
   )
 }
 
-function ViewDiarios({ onOpen, tier, user }) {
+// ── ViewDiarios ───────────────────────────────────────────────────────────────
+function ViewDiarios({ onOpen, tier, user, lang }) {
+  var t = T[lang] || T.es
   var limit = tier === 'claraval' ? 999 : tier === 'discipulo' ? 3 : tier === 'peregrino' ? 1 : 0
   var [progress, setProgress] = useState({})
   var [journalMetas, setJournalMetas] = useState({})
+
   useEffect(function() {
     if (!user) return
     supabase.from('journal_entries').select('journal_slug, day_number, week_number').eq('user_id', user.id).then(function(r) {
@@ -745,27 +880,30 @@ function ViewDiarios({ onOpen, tier, user }) {
       }
     })
   }, [user])
+
   useEffect(function() {
-    supabase.from('journal_metadata').select('journal_slug, description').eq('lang', 'es').then(function(r) {
+    supabase.from('journal_metadata').select('journal_slug, description').eq('lang', lang).then(function(r) {
       if (r.data) { var m = {}; r.data.forEach(function(row) { m[row.journal_slug] = row }); setJournalMetas(m) }
     })
-  }, [])
+  }, [lang])
+
   return (
     <div style={s.content}>
-      <h2 style={Object.assign({}, s.h1, { marginBottom: '0.25rem' })}>Mis Diarios</h2>
-      <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Diarios de oración y examen</p>
+      <h2 style={Object.assign({}, s.h1, { marginBottom: '0.25rem' })}>{t.myJournals}</h2>
+      <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '1.5rem' }}>{t.journalSubtitle}</p>
       <div style={s.journalGrid}>
         {JOURNALS.map(function(j, i) {
           var locked = i >= limit
           var unit = progress[j.slug] || 0
           var pct = Math.round((unit / j.total) * 100)
-          var unitLabel = j.type === 'weekly' ? 'Semana' : 'Día'
+          var unitLabel = j.type === 'weekly' ? t.weekLabel : t.dayLabel
           var meta = journalMetas[j.slug]
           var desc = meta && meta.description ? (meta.description.length > 80 ? meta.description.slice(0, 80) + '...' : meta.description) : null
+          var title = lang === 'en' ? (j.titleEn || j.title) : j.title
           return (
             <div key={j.slug} style={Object.assign({}, s.journalCard, { opacity: locked ? 0.5 : 1, cursor: locked ? 'default' : 'pointer' })} onClick={function() { if (!locked) onOpen(j, unit + 1) }}>
-              <div style={{ fontSize: '0.7rem', color: colors.oro, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.35rem' }}>{locked ? 'Bloqueado' : unitLabel + ' ' + (unit + 1) + ' / ' + j.total}</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: colors.texto }}>{j.title}</div>
+              <div style={{ fontSize: '0.7rem', color: colors.oro, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.35rem' }}>{locked ? t.locked : unitLabel + ' ' + (unit + 1) + ' / ' + j.total}</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: colors.texto }}>{title}</div>
               {desc && <p style={{ fontSize: '0.78rem', color: '#888', lineHeight: 1.4, marginTop: '0.3rem', marginBottom: 0 }}>{desc}</p>}
               {!locked && <div style={{ height: '4px', backgroundColor: '#f0e8d8', borderRadius: '2px', marginTop: '0.75rem' }}><div style={{ height: '4px', width: pct + '%', backgroundColor: colors.oro, borderRadius: '2px' }} /></div>}
             </div>
@@ -776,7 +914,9 @@ function ViewDiarios({ onOpen, tier, user }) {
   )
 }
 
-function ViewJournal({ journal, initialUnit, onBack, user }) {
+// ── ViewJournal ───────────────────────────────────────────────────────────────
+function ViewJournal({ journal, initialUnit, onBack, user, lang }) {
+  var t = T[lang] || T.es
   var isWeekly = journal.type === 'weekly'
   var [currentUnit, setCurrentUnit] = useState(initialUnit)
   var [answers, setAnswers] = useState({})
@@ -791,10 +931,10 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
 
   useEffect(function() {
     if (!journal.hasPatronSaint) return
-    supabase.from('journal_content').select('title, content').eq('journal_slug', journal.slug).eq('section_type', 'patron_saint').eq('lang', 'es').maybeSingle().then(function(r) {
+    supabase.from('journal_content').select('title, content').eq('journal_slug', journal.slug).eq('section_type', 'patron_saint').eq('lang', lang).maybeSingle().then(function(r) {
       setPatronSaint(r.data || null)
     })
-  }, [journal.slug])
+  }, [journal.slug, lang])
 
   useEffect(function() {
     if (currentUnit === 0) { setLoading(false); setQuestions([]); return }
@@ -802,10 +942,10 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
     setAnswers({})
     setSaved(false)
     var entriesPromise = user
-      ? getJournalEntries(user.id, journal.slug, currentUnit, 'es')
+      ? getJournalEntries(user.id, journal.slug, currentUnit, lang)
       : Promise.resolve(null)
     Promise.all([
-      getJournalDay(journal.slug, currentUnit, 'es', isWeekly),
+      getJournalDay(journal.slug, currentUnit, lang, isWeekly),
       entriesPromise
     ]).then(function(results) {
       var day = results[0]
@@ -815,13 +955,13 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
       if (results[1]) {
         results[1].forEach(function(e) { a[e.question_number || 1] = e.response_text || '' })
       } else {
-        var lsData = lsJournalLoad(journal.slug, currentUnit, 'es')
+        var lsData = lsJournalLoad(journal.slug, currentUnit, lang)
         Object.keys(lsData).forEach(function(k) { a[k] = lsData[k] })
       }
       setAnswers(a)
       setLoading(false)
     })
-  }, [journal.slug, journal.type, currentUnit, user])
+  }, [journal.slug, journal.type, currentUnit, user, lang])
 
   async function handleSave() {
     if (!user) {
@@ -835,16 +975,17 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
       var qn = q.question_number || 1
       return { question_number: qn, response_text: answers[qn] || '' }
     })
-    await saveJournalEntries(user.id, journal.slug, currentUnit, 'es', entries)
+    await saveJournalEntries(user.id, journal.slug, currentUnit, lang, entries)
     setSaving(false); setSaved(true); setTimeout(function() { setSaved(false) }, 2000)
   }
 
-  var unitLabel = isWeekly ? 'Semana' : 'Día'
+  var unitLabel = isWeekly ? t.weekLabel : t.dayLabel
   var displayQuestions = questions.length > 0 ? questions : [{ question_number: 1, title: null, content: null }]
+  var journalTitle = lang === 'en' ? (journal.titleEn || journal.title) : journal.title
 
   return (
     <div style={s.content}>
-      <button onClick={onBack} style={{ background: 'none', border: 'none', color: colors.vino, cursor: 'pointer', marginBottom: '1rem', fontSize: '0.9rem' }}>Volver</button>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', color: colors.vino, cursor: 'pointer', marginBottom: '1rem', fontSize: '0.9rem' }}>{t.back}</button>
 
       {metadata && metadata.description && showDesc && currentUnit === 1 && (
         <div style={{ backgroundColor: '#fdf8f0', border: '1px solid #e8dcc8', borderRadius: '8px', padding: '1.25rem 1.25rem 1rem', marginBottom: '1rem', position: 'relative' }}>
@@ -854,17 +995,17 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
       )}
 
       {metadata && metadata.description && !showDesc && currentUnit === 1 && (
-        <button onClick={function() { setShowDesc(true) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '0.8rem', marginBottom: '0.75rem', padding: 0 }}>ℹ️ Sobre este diario</button>
+        <button onClick={function() { setShowDesc(true) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '0.8rem', marginBottom: '0.75rem', padding: 0 }}>{t.aboutJournal}</button>
       )}
 
       <div style={s.card}>
-        <div style={s.cardTitle}>{journal.title} - {currentUnit === 0 ? 'Santo Patrono' : unitLabel + ' ' + currentUnit}</div>
-        {loading ? <p style={{ color: '#888' }}>Cargando...</p> : (
+        <div style={s.cardTitle}>{journalTitle} - {currentUnit === 0 ? t.patronSaint : unitLabel + ' ' + currentUnit}</div>
+        {loading ? <p style={{ color: '#888' }}>{t.loading}</p> : (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <button onClick={function() { var minUnit = journal.hasPatronSaint ? 0 : 1; if (currentUnit > minUnit) setCurrentUnit(currentUnit - 1) }} disabled={currentUnit <= (journal.hasPatronSaint ? 0 : 1)} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem 0.8rem', cursor: currentUnit > (journal.hasPatronSaint ? 0 : 1) ? 'pointer' : 'default', color: currentUnit > (journal.hasPatronSaint ? 0 : 1) ? '#782F40' : '#ccc', fontSize: '0.85rem' }}>← Anterior</button>
-              <span style={{ fontSize: '0.85rem', color: '#888' }}>{currentUnit === 0 ? 'Santo Patrono' : unitLabel + ' ' + currentUnit + ' / ' + journal.total}</span>
-              <button onClick={function() { if (currentUnit < journal.total) setCurrentUnit(currentUnit + 1) }} disabled={currentUnit >= journal.total} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem 0.8rem', cursor: currentUnit < journal.total ? 'pointer' : 'default', color: currentUnit < journal.total ? '#782F40' : '#ccc', fontSize: '0.85rem' }}>Siguiente →</button>
+              <button onClick={function() { var minUnit = journal.hasPatronSaint ? 0 : 1; if (currentUnit > minUnit) setCurrentUnit(currentUnit - 1) }} disabled={currentUnit <= (journal.hasPatronSaint ? 0 : 1)} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem 0.8rem', cursor: currentUnit > (journal.hasPatronSaint ? 0 : 1) ? 'pointer' : 'default', color: currentUnit > (journal.hasPatronSaint ? 0 : 1) ? '#782F40' : '#ccc', fontSize: '0.85rem' }}>{t.prev}</button>
+              <span style={{ fontSize: '0.85rem', color: '#888' }}>{currentUnit === 0 ? t.patronSaint : unitLabel + ' ' + currentUnit + ' / ' + journal.total}</span>
+              <button onClick={function() { if (currentUnit < journal.total) setCurrentUnit(currentUnit + 1) }} disabled={currentUnit >= journal.total} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem 0.8rem', cursor: currentUnit < journal.total ? 'pointer' : 'default', color: currentUnit < journal.total ? '#782F40' : '#ccc', fontSize: '0.85rem' }}>{t.next}</button>
             </div>
             {currentUnit === 0 ? (
               patronSaint ? (
@@ -872,7 +1013,7 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
                   {patronSaint.title && <p style={{ fontWeight: 'bold', fontSize: '0.9rem', color: colors.vino, margin: '0 0 0.75rem' }}>{patronSaint.title}</p>}
                   {patronSaint.content && <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.92rem', color: '#555', margin: 0 }}>{patronSaint.content}</p>}
                 </div>
-              ) : <p style={{ color: '#888', fontStyle: 'italic' }}>Cargando...</p>
+              ) : <p style={{ color: '#888', fontStyle: 'italic' }}>{t.loading}</p>
             ) : (
               <>
                 {metadata && metadata.opening_prayer && (
@@ -897,17 +1038,17 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
                             var next = Object.assign({}, prev, { [qn]: val })
                             if (debounceRef.current) clearTimeout(debounceRef.current)
                             debounceRef.current = setTimeout(function() {
-                              lsJournalSave(journal.slug, currentUnit, 'es', next)
+                              lsJournalSave(journal.slug, currentUnit, lang, next)
                             }, 500)
                             return next
                           })
                         }}
-                        placeholder="Escribe aqui..."
+                        placeholder={t.writeHere}
                       />
                     </div>
                   )
                 })}
-                <button style={s.btn(saved ? colors.verde : colors.vino)} onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : saved ? 'Guardado ✓' : 'Guardar entrada'}</button>
+                <button style={s.btn(saved ? colors.verde : colors.vino)} onClick={handleSave} disabled={saving}>{saving ? t.saving : saved ? t.saved : t.save}</button>
                 {metadata && metadata.closing_prayer && (
                   <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f0e8d8' }}>
                     <span style={{ color: colors.vino, marginRight: '0.4rem' }}>✠</span>{metadata.closing_prayer}
@@ -922,41 +1063,45 @@ function ViewJournal({ journal, initialUnit, onBack, user }) {
   )
 }
 
-function ViewPricing({ onCheckout, loading, tier }) {
+// ── ViewPricing ───────────────────────────────────────────────────────────────
+function ViewPricing({ onCheckout, loading, tier, lang }) {
+  var t = T[lang] || T.es
   var lv = TIER_LEVELS[tier] || 0
   return (
     <div style={s.content}>
-      <h2 style={Object.assign({}, s.h1, { marginBottom: '0.25rem' })}>Planes</h2>
-      <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '1.5rem' }}>El contenido liturgico siempre es gratuito.</p>
+      <h2 style={Object.assign({}, s.h1, { marginBottom: '0.25rem' })}>{t.plans}</h2>
+      <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '1.5rem' }}>{t.planSubtitle}</p>
       <div style={s.pricingCard(false)}>
-        <div style={s.badge(colors.verde)}>Gratuito</div>
-        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Cuenta Gratuita</h3>
-        <p style={Object.assign({}, s.p, { fontSize: '0.85rem' })}>Evangelio - Santo del dia - Laudes - Liturgia de las Horas - Rosario - Coronilla</p>
-        {lv === 0 && <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>Tu plan actual</div>}
+        <div style={s.badge(colors.verde)}>{t.freeBadge}</div>
+        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{t.freePlanName}</h3>
+        <p style={Object.assign({}, s.p, { fontSize: '0.85rem' })}>{t.freeDesc}</p>
+        {lv === 0 && <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>{t.currentPlan}</div>}
       </div>
       <div style={s.pricingCard(lv < 1)}>
         <div style={Object.assign({}, s.badge(colors.oro), { color: lv < 1 ? colors.texto : 'white' })}>$1.99 USD/mes</div>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Peregrino</h3>
-        <p style={{ fontSize: '0.85rem', opacity: 0.9 }}>Reflexion diaria + 1 journal</p>
-        {lv >= 1 ? <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>Incluido</div> : <button style={Object.assign({}, s.btn('white'), { color: colors.vino })} disabled={loading} onClick={function() { onCheckout('peregrino') }}>{loading ? 'Cargando...' : 'Suscribirse'}</button>}
+        <p style={{ fontSize: '0.85rem', opacity: 0.9 }}>{lang === 'en' ? 'Daily reflection + 1 journal' : 'Reflexion diaria + 1 journal'}</p>
+        {lv >= 1 ? <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>{t.included}</div> : <button style={Object.assign({}, s.btn('white'), { color: colors.vino })} disabled={loading} onClick={function() { onCheckout('peregrino') }}>{loading ? t.loading : t.subscribe}</button>}
       </div>
       <div style={s.pricingCard(false)}>
         <div style={s.badge(colors.azul)}>$3.99 USD/mes</div>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Discipulo</h3>
-        <p style={Object.assign({}, s.p, { fontSize: '0.85rem' })}>Reflexion + 3 journals</p>
-        {lv >= 2 ? <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>Incluido</div> : <button style={s.btn(colors.azul)} disabled={loading} onClick={function() { onCheckout('discipulo') }}>{loading ? 'Cargando...' : 'Suscribirse'}</button>}
+        <p style={Object.assign({}, s.p, { fontSize: '0.85rem' })}>{lang === 'en' ? 'Reflection + 3 journals' : 'Reflexion + 3 journals'}</p>
+        {lv >= 2 ? <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>{t.included}</div> : <button style={s.btn(colors.azul)} disabled={loading} onClick={function() { onCheckout('discipulo') }}>{loading ? t.loading : t.subscribe}</button>}
       </div>
       <div style={s.pricingCard(false)}>
         <div style={s.badge(colors.vino)}>$5.99 USD/mes</div>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Claraval</h3>
-        <p style={Object.assign({}, s.p, { fontSize: '0.85rem' })}>Todo: 9 journals + contenido futuro</p>
-        {lv >= 3 ? <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>Tu plan actual</div> : <button style={s.btn(colors.vino)} disabled={loading} onClick={function() { onCheckout('claraval') }}>{loading ? 'Cargando...' : 'Suscribirse'}</button>}
+        <p style={Object.assign({}, s.p, { fontSize: '0.85rem' })}>{lang === 'en' ? 'Everything: 9 journals + future content' : 'Todo: 9 journals + contenido futuro'}</p>
+        {lv >= 3 ? <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>{t.currentPlan}</div> : <button style={s.btn(colors.vino)} disabled={loading} onClick={function() { onCheckout('claraval') }}>{loading ? t.loading : t.subscribe}</button>}
       </div>
     </div>
   )
 }
 
-function ViewRedeem({ user }) {
+// ── ViewRedeem ────────────────────────────────────────────────────────────────
+function ViewRedeem({ user, lang }) {
+  var t = T[lang] || T.es
   var [code, setCode] = useState(''); var [msg, setMsg] = useState(''); var [ld, setLd] = useState(false)
   async function handleRedeem() {
     if (!code.trim()) return; setLd(true); setMsg('')
@@ -970,16 +1115,17 @@ function ViewRedeem({ user }) {
   return (
     <div style={s.content}>
       <div style={s.card}>
-        <div style={s.cardTitle}>Canjear codigo</div>
-        <p style={Object.assign({}, s.p, { marginBottom: '1rem' })}>Si tienes un codigo promocional o de un journal fisico, ingresalo aqui.</p>
+        <div style={s.cardTitle}>{t.redeemPageTitle}</div>
+        <p style={Object.assign({}, s.p, { marginBottom: '1rem' })}>{t.redeemPageDesc}</p>
         <input type="text" value={code} onChange={function(e) { setCode(e.target.value.toUpperCase()) }} placeholder="CODIGO" style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '6px', fontSize: '1.1rem', textAlign: 'center', letterSpacing: '0.2em', fontFamily: 'Georgia, serif', boxSizing: 'border-box', color: colors.texto }} />
-        <button style={s.btn(colors.vino)} onClick={handleRedeem} disabled={ld}>{ld ? 'Canjeando...' : 'Canjear'}</button>
+        <button style={s.btn(colors.vino)} onClick={handleRedeem} disabled={ld}>{ld ? t.redeeming : t.redeemBtn}</button>
         {msg && <div style={{ marginTop: '1rem', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem', backgroundColor: msg.includes('Error') ? '#fee2e2' : '#dcfce7', color: msg.includes('Error') ? '#991b1b' : '#166534' }}>{msg}</div>}
       </div>
     </div>
   )
 }
 
+// ── Liturgia helpers (unchanged) ──────────────────────────────────────────────
 function LitugiaPsalterContent({ c, stl }) {
   if (!c) return <p style={s.p}>Contenido no disponible aún</p>
   function PsalmBlock({ ps, label }) {
@@ -1201,6 +1347,30 @@ function LiturgiaContent({ data }) {
   )
 }
 
+// ── Language toggle pill ──────────────────────────────────────────────────────
+function LangToggle({ lang, onChange }) {
+  var pillStyle = {
+    display: 'flex', alignItems: 'center', borderRadius: '20px',
+    border: '1px solid rgba(255,255,255,0.4)', overflow: 'hidden', fontSize: '0.72rem',
+  }
+  var btnStyle = function(active) {
+    return {
+      background: active ? 'white' : 'transparent',
+      color: active ? colors.vino : 'rgba(255,255,255,0.8)',
+      border: 'none', padding: '0.22rem 0.55rem',
+      cursor: 'pointer', fontWeight: active ? 'bold' : 'normal',
+      fontFamily: 'Georgia, serif', fontSize: '0.72rem', lineHeight: 1,
+    }
+  }
+  return (
+    <div style={pillStyle}>
+      <button style={btnStyle(lang === 'es')} onClick={function() { onChange('es') }}>ES</button>
+      <button style={btnStyle(lang === 'en')} onClick={function() { onChange('en') }}>EN</button>
+    </div>
+  )
+}
+
+// ── App root ──────────────────────────────────────────────────────────────────
 function App() {
   var [vista, setVista] = useState('hoy')
   var [journalAbierto, setJournalAbierto] = useState(null)
@@ -1209,6 +1379,20 @@ function App() {
   var [profile, setProfile] = useState(null)
   var [loading, setLoading] = useState(false)
   var [checking, setChecking] = useState(true)
+  var [lang, setLangState] = useState('es')
+
+  // Load lang from localStorage on mount
+  useEffect(function() {
+    try {
+      var saved = localStorage.getItem('lc_lang')
+      if (saved === 'es' || saved === 'en') setLangState(saved)
+    } catch(e) {}
+  }, [])
+
+  function setLang(l) {
+    setLangState(l)
+    try { localStorage.setItem('lc_lang', l) } catch(e) {}
+  }
 
   useEffect(function() {
     supabase.auth.getSession().then(function(res) {
@@ -1237,6 +1421,7 @@ function App() {
   }, [])
 
   var tier = getEffectiveTier(profile)
+  var t = T[lang] || T.es
 
   async function handleCheckout(plan) {
     if (!user) { window.location.href = '/login'; return }
@@ -1251,13 +1436,13 @@ function App() {
     setLoading(false)
   }
 
-  if (checking) return <div style={{ backgroundColor: colors.pergamino, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', color: colors.vino }}>Cargando...</div>
+  if (checking) return <div style={{ backgroundColor: colors.pergamino, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', color: colors.vino }}>{t.loading}</div>
 
   var tabs = [
-    { id: 'hoy', label: 'Hoy' },
-    { id: 'diarios', label: 'Diarios' },
-    { id: 'precios', label: 'Planes' },
-    { id: 'canjear', label: 'Canjear' },
+    { id: 'hoy', label: t.today },
+    { id: 'diarios', label: t.journals },
+    { id: 'precios', label: t.plans },
+    { id: 'canjear', label: t.redeem },
   ]
 
   return (
@@ -1265,18 +1450,19 @@ function App() {
       <header style={s.header}>
         <span style={s.logo}>Little Claraval</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <LangToggle lang={lang} onChange={setLang} />
           {user && <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>{user.email}</span>}
-          {user && <button onClick={function() { supabase.auth.signOut().then(function() { window.location.href = '/login' }) }} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.7rem' }}>Salir</button>}
+          {user && <button onClick={function() { supabase.auth.signOut().then(function() { window.location.href = '/login' }) }} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.7rem' }}>{t.signOut}</button>}
         </div>
       </header>
       <nav style={s.nav}>
-        {tabs.map(function(t) { return <button key={t.id} style={s.navBtn(vista === t.id)} onClick={function() { setVista(t.id); setJournalAbierto(null) }}>{t.label}</button> })}
+        {tabs.map(function(tab) { return <button key={tab.id} style={s.navBtn(vista === tab.id)} onClick={function() { setVista(tab.id); setJournalAbierto(null) }}>{tab.label}</button> })}
       </nav>
-      {vista === 'hoy' && <ViewHoy tier={tier} onSwitchView={setVista} />}
-      {vista === 'diarios' && !journalAbierto && <ViewDiarios onOpen={function(j, u) { setJournalAbierto(j); setJournalUnit(u) }} tier={tier} user={user} />}
-      {vista === 'diarios' && journalAbierto && <ViewJournal journal={journalAbierto} initialUnit={journalUnit} onBack={function() { setJournalAbierto(null) }} user={user} />}
-      {vista === 'precios' && <ViewPricing onCheckout={handleCheckout} loading={loading} tier={tier} />}
-      {vista === 'canjear' && <ViewRedeem user={user} />}
+      {vista === 'hoy' && <ViewHoy tier={tier} onSwitchView={setVista} lang={lang} />}
+      {vista === 'diarios' && !journalAbierto && <ViewDiarios onOpen={function(j, u) { setJournalAbierto(j); setJournalUnit(u) }} tier={tier} user={user} lang={lang} />}
+      {vista === 'diarios' && journalAbierto && <ViewJournal journal={journalAbierto} initialUnit={journalUnit} onBack={function() { setJournalAbierto(null) }} user={user} lang={lang} />}
+      {vista === 'precios' && <ViewPricing onCheckout={handleCheckout} loading={loading} tier={tier} lang={lang} />}
+      {vista === 'canjear' && <ViewRedeem user={user} lang={lang} />}
     </div>
   )
 }
