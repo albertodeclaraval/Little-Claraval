@@ -76,7 +76,7 @@ var FEAST_KEY_MAP = {
   mary_mother:           ['mary, mother of god', 'solemnity of mary'],
   ascension:             ['ascension of the lord'],
   pentecost:             ['pentecost sunday'],
-  trinity:               ['most holy trinity'],
+  trinity:               ['most holy trinity', 'trinity sunday'],
   corpus_christi:        ['most holy body and blood', 'corpus christi'],
   sacred_heart:          ['sacred heart of jesus'],
   assumption:            ['assumption of the blessed virgin mary'],
@@ -101,7 +101,7 @@ function getFeastKey(litDay) {
 async function queryByPosition(table, lang, season, feastKey, cycle, weekday, week, includeWeekday) {
   var q = supabase.from(table).select('*').eq('lang', lang).eq('season', season)
   if (feastKey) {
-    q = q.eq('cycle', 'FIXED').eq('feast_key', feastKey)
+    q = q.eq('cycle', cycle).eq('feast_key', feastKey)
   } else {
     q = q.eq('cycle', cycle).eq('feast_key', '')
     if (includeWeekday) q = q.eq('weekday', weekday)
