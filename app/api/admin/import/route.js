@@ -188,21 +188,27 @@ async function importLiturgia(rows, hourType) {
 // Excel cols: journal_slug, day_number, week_number, lang, title, content
 // question_number is auto-assigned sequentially within each (slug,day,week,lang) group if not in Excel
 async function importJournals(rows) {
-  var groupCount = {}
-  var mapped = rows.filter(function(r) { return r.journal_slug }).map(function(r) {
+  var groupCount = {}, seen = {}, mapped = []
+  var valid = rows.filter(function(r) { return r.journal_slug })
+  for (var i = 0; i < valid.length; i++) {
+    var r = valid[i]
     var key = [r.journal_slug.trim(), r.day_number || '', r.week_number || '', (clean(r.lang) || 'es')].join('|')
     groupCount[key] = (groupCount[key] || 0) + 1
-    return {
+    var qn = groupCount[key]
+    var ukey = key + '|' + qn
+    if (seen[ukey]) continue
+    seen[ukey] = true
+    mapped.push({
       journal_slug: r.journal_slug.trim(),
       day_number: toIntOrNull(r.day_number),
       week_number: toIntOrNull(r.week_number),
       lang: clean(r.lang) || 'es',
       section_type: clean(r.section_type) || 'question',
-      question_number: toIntOrNull(r.question_number) || groupCount[key],
+      question_number: qn,
       title: clean(r.title),
       content: clean(r.content)
-    }
-  })
+    })
+  }
   if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
   var BATCH = 200, total = 0, errors = []
   for (var i = 0; i < mapped.length; i += BATCH) {
