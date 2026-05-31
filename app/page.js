@@ -445,6 +445,11 @@ function ViewHoy({ tier, onSwitchView }) {
   var celebration = litDay && litDay.celebration
   var rd = readings && readings.readings
 
+  var mergedFirst  = { ref: (supabaseReadings && supabaseReadings.first_reading_ref)  || (rd && rd.firstReading),   text: supabaseReadings && supabaseReadings.first_reading_text }
+  var mergedPsalm  = { ref: (supabaseReadings && supabaseReadings.psalm_ref)           || (rd && rd.psalm),          text: supabaseReadings && supabaseReadings.psalm_text }
+  var mergedSecond = { ref: (supabaseReadings && supabaseReadings.second_reading_ref)  || (rd && rd.secondReading),  text: supabaseReadings && supabaseReadings.second_reading_text }
+  var mergedGospel = { ref: (supabaseReadings && supabaseReadings.gospel_ref)          || (rd && rd.gospel),         text: supabaseReadings && supabaseReadings.gospel_text }
+
   if (loading) {
     return <div style={Object.assign({}, s.content, { textAlign: 'center', color: '#aaa', paddingTop: '3rem' })}>Cargando...</div>
   }
@@ -471,61 +476,38 @@ function ViewHoy({ tier, onSwitchView }) {
           <div style={s.cardTitle}>Lecturas del Día</div>
           <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.lecturas ? '▾' : '▸'}</span>
         </div>
-        {open.lecturas && (supabaseReadings ? (
-          <>
-            {supabaseReadings.first_reading_ref && (
-              <Accordion title={'Primera Lectura — ' + supabaseReadings.first_reading_ref} isOpen={open.primera} onToggle={function() { toggle('primera') }}>
-                {supabaseReadings.first_reading_text && (
-                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.first_reading_text}</p>
-                )}
-              </Accordion>
-            )}
-            {supabaseReadings.psalm_ref && (
-              <Accordion title={'Salmo — ' + supabaseReadings.psalm_ref} isOpen={open.salmo} onToggle={function() { toggle('salmo') }}>
-                {supabaseReadings.psalm_text && (
-                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.psalm_text}</p>
-                )}
-              </Accordion>
-            )}
-            {supabaseReadings.second_reading_ref && (
-              <Accordion title={'Segunda Lectura — ' + supabaseReadings.second_reading_ref} isOpen={open.segunda} onToggle={function() { toggle('segunda') }}>
-                {supabaseReadings.second_reading_text && (
-                  <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.second_reading_text}</p>
-                )}
-              </Accordion>
-            )}
-            {supabaseReadings.gospel_ref && (
-              <Accordion title={'Evangelio — ' + supabaseReadings.gospel_ref} isOpen={open.evangelio} onToggle={function() { toggle('evangelio') }} highlight={true}>
-                {supabaseReadings.gospel_text && (
-                  <p style={{ lineHeight: 1.9, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{supabaseReadings.gospel_text}</p>
-                )}
-              </Accordion>
-            )}
-          </>
-        ) : !rd ? (
+        {open.lecturas && (!mergedFirst.ref && !mergedPsalm.ref && !mergedGospel.ref ? (
           <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>
             No se pudieron cargar las lecturas. Verifica tu conexión.
           </p>
         ) : (
           <>
-            {rd.firstReading && (
-              <Accordion title={'Primera Lectura — ' + rd.firstReading} isOpen={open.primera} onToggle={function() { toggle('primera') }}>
-                <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>
+            {mergedFirst.ref && (
+              <Accordion title={'Primera Lectura — ' + mergedFirst.ref} isOpen={open.primera} onToggle={function() { toggle('primera') }}>
+                {mergedFirst.text
+                  ? <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{mergedFirst.text}</p>
+                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>}
               </Accordion>
             )}
-            {rd.psalm && (
-              <Accordion title={'Salmo — ' + rd.psalm} isOpen={open.salmo} onToggle={function() { toggle('salmo') }}>
-                <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>
+            {mergedPsalm.ref && (
+              <Accordion title={'Salmo — ' + mergedPsalm.ref} isOpen={open.salmo} onToggle={function() { toggle('salmo') }}>
+                {mergedPsalm.text
+                  ? <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{mergedPsalm.text}</p>
+                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>}
               </Accordion>
             )}
-            {rd.secondReading && (
-              <Accordion title={'Segunda Lectura — ' + rd.secondReading} isOpen={open.segunda} onToggle={function() { toggle('segunda') }}>
-                <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>
+            {mergedSecond.ref && (
+              <Accordion title={'Segunda Lectura — ' + mergedSecond.ref} isOpen={open.segunda} onToggle={function() { toggle('segunda') }}>
+                {mergedSecond.text
+                  ? <p style={{ lineHeight: 1.85, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{mergedSecond.text}</p>
+                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>}
               </Accordion>
             )}
-            {rd.gospel && (
-              <Accordion title={'Evangelio — ' + rd.gospel} isOpen={open.evangelio} onToggle={function() { toggle('evangelio') }} highlight={true}>
-                <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>
+            {mergedGospel.ref && (
+              <Accordion title={'Evangelio — ' + mergedGospel.ref} isOpen={open.evangelio} onToggle={function() { toggle('evangelio') }} highlight={true}>
+                {mergedGospel.text
+                  ? <p style={{ lineHeight: 1.9, fontSize: '0.95rem', color: '#3a3a3a', whiteSpace: 'pre-wrap' }}>{mergedGospel.text}</p>
+                  : <p style={{ fontSize: '0.78rem', color: '#bbb', fontStyle: 'italic' }}>Texto completo próximamente</p>}
               </Accordion>
             )}
           </>
@@ -545,30 +527,36 @@ function ViewHoy({ tier, onSwitchView }) {
           <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Reflexión en preparación...</p>
         ) : canReflection ? (
           <div>
-            {reflection.silence && (
-              <p style={Object.assign({}, s.p, { fontStyle: 'italic', color: '#777', marginBottom: '1rem' })}>
-                {reflection.silence}
-              </p>
-            )}
-            {reflection.meditative_phrase && (
-              <p style={Object.assign({}, s.p, { fontWeight: 'bold', marginBottom: '1rem' })}>
-                «{reflection.meditative_phrase}»
-              </p>
-            )}
-            {reflection.inner_question && (
-              <p style={Object.assign({}, s.p, { color: colors.verde, marginBottom: '1rem' })}>
-                {reflection.inner_question}
-              </p>
-            )}
-            {reflection.brief_prayer && (
-              <p style={Object.assign({}, s.p, { fontStyle: 'italic' })}>
-                {reflection.brief_prayer}
-              </p>
-            )}
             {reflection.gospel_ref && (
-              <p style={{ fontSize: '0.75rem', color: colors.oro, marginBottom: '0.5rem', fontWeight: 'bold', letterSpacing: '0.05em' }}>
+              <p style={{ fontSize: '0.75rem', color: colors.oro, marginBottom: '1rem', fontWeight: 'bold', letterSpacing: '0.05em' }}>
                 {reflection.gospel_ref}
               </p>
+            )}
+            {(reflection.silence || reflection.meditative_phrase || reflection.inner_question || reflection.brief_prayer) ? (
+              <>
+                {reflection.silence && (
+                  <p style={Object.assign({}, s.p, { fontStyle: 'italic', color: '#777', marginBottom: '1rem' })}>
+                    {reflection.silence}
+                  </p>
+                )}
+                {reflection.meditative_phrase && (
+                  <p style={Object.assign({}, s.p, { fontWeight: 'bold', marginBottom: '1rem' })}>
+                    «{reflection.meditative_phrase}»
+                  </p>
+                )}
+                {reflection.inner_question && (
+                  <p style={Object.assign({}, s.p, { color: colors.verde, marginBottom: '1rem' })}>
+                    {reflection.inner_question}
+                  </p>
+                )}
+                {reflection.brief_prayer && (
+                  <p style={Object.assign({}, s.p, { fontStyle: 'italic' })}>
+                    {reflection.brief_prayer}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>Reflexión en preparación...</p>
             )}
           </div>
         ) : (
