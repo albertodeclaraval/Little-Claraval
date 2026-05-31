@@ -94,6 +94,11 @@ var T = {
       { key: 'hail_mary', label: 'Ave María' },
       { key: 'apostles_creed', label: 'Credo' },
     ],
+    dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+    dayNamesShort: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'],
+    monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+    monthNamesLong: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+    goToToday: 'Hoy',
   },
   en: {
     today: 'Today', journals: 'Journals', plans: 'Plans', redeem: 'Redeem',
@@ -154,6 +159,11 @@ var T = {
       { key: 'hail_mary', label: 'Hail Mary' },
       { key: 'apostles_creed', label: "Apostles' Creed" },
     ],
+    dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    dayNamesShort: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+    monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    monthNamesLong: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    goToToday: 'Today',
   },
 }
 
@@ -272,6 +282,10 @@ function getSeasonLabel(season, lang) {
 }
 
 var MYSTERY_CIRCLES = ['①', '②', '③', '④', '⑤']
+
+function toDateStr(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+}
 
 // ── Base UI components ──────────────────────────────────────────────────────
 function Accordion({ title, isOpen, onToggle, highlight, children }) {
@@ -503,18 +517,17 @@ function RosarioContent({ rosary, weekday, t, lang }) {
 }
 
 // ── ViewHoy ──────────────────────────────────────────────────────────────────
-function ViewHoy({ tier, onSwitchView, lang }) {
+function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
   var t = T[lang] || T.es
   var canReflection = (TIER_LEVELS[tier] || 0) >= 1
 
-  var today = new Date()
-  var year = today.getFullYear()
+  var today = selectedDate
+  var dateStr = toDateStr(today)
   var mo = String(today.getMonth() + 1).padStart(2, '0')
   var dy = String(today.getDate()).padStart(2, '0')
-  var dateStr = year + '-' + mo + '-' + dy
   var monthDay = mo + '-' + dy
   var weekday = today.getDay()
-  var hour = today.getHours()
+  var hour = new Date().getHours()  // always real current hour for liturgy highlighting
 
   var [readings, setReadings] = useState(null)
   var [litDay, setLitDay] = useState(null)
@@ -558,7 +571,7 @@ function ViewHoy({ tier, onSwitchView, lang }) {
       setSupabaseReadings(r[10])
       setLoading(false)
     })
-  }, [lang])
+  }, [lang, dateStr])
 
   function toggle(key) {
     setOpen(function(prev) { return Object.assign({}, prev, { [key]: !prev[key] }) })
@@ -592,6 +605,9 @@ function ViewHoy({ tier, onSwitchView, lang }) {
 
   return (
     <div style={s.content}>
+
+      {/* Navegación por fecha */}
+      <DateNav date={selectedDate} onChange={onDateChange} lang={lang} t={t} />
 
       {/* Encabezado litúrgico */}
       <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
@@ -1347,6 +1363,138 @@ function LiturgiaContent({ data }) {
   )
 }
 
+// ── Mini Calendar ─────────────────────────────────────────────────────────────
+function MiniCalendar({ date, onChange, onClose, t }) {
+  var [viewYear, setViewYear] = useState(date.getFullYear())
+  var [viewMonth, setViewMonth] = useState(date.getMonth())
+
+  var todayStr = toDateStr(new Date())
+  var selectedStr = toDateStr(date)
+
+  var firstDay = new Date(viewYear, viewMonth, 1).getDay()
+  var daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+  var cells = []
+  for (var i = 0; i < firstDay; i++) cells.push(null)
+  for (var d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1) }
+    else setViewMonth(viewMonth - 1)
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1) }
+    else setViewMonth(viewMonth + 1)
+  }
+
+  return (
+    <div style={{
+      position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
+      backgroundColor: 'white', border: '1px solid #e8dcc8', borderRadius: '10px',
+      boxShadow: '0 6px 24px rgba(0,0,0,0.13)', padding: '0.85rem', zIndex: 200,
+      minWidth: '270px', marginTop: '0.4rem',
+    }}>
+      {/* Month navigation */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+        <button onClick={prevMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.vino, fontSize: '1.1rem', padding: '0.2rem 0.5rem', lineHeight: 1 }}>‹</button>
+        <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: colors.texto }}>
+          {t.monthNames[viewMonth]} {viewYear}
+        </span>
+        <button onClick={nextMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.vino, fontSize: '1.1rem', padding: '0.2rem 0.5rem', lineHeight: 1 }}>›</button>
+      </div>
+      {/* Day-of-week headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '0.2rem' }}>
+        {t.dayNamesShort.map(function(dn) {
+          return <div key={dn} style={{ textAlign: 'center', fontSize: '0.6rem', color: '#bbb', padding: '0.15rem 0', fontWeight: 'bold', textTransform: 'uppercase' }}>{dn}</div>
+        })}
+      </div>
+      {/* Day cells */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.15rem' }}>
+        {cells.map(function(day, idx) {
+          if (!day) return <div key={idx} />
+          var cellStr = viewYear + '-' + String(viewMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0')
+          var isSelected = cellStr === selectedStr
+          var isToday = cellStr === todayStr
+          return (
+            <button
+              key={idx}
+              onClick={function() { onChange(new Date(viewYear, viewMonth, day, 12, 0, 0)); onClose() }}
+              style={{
+                background: isSelected ? colors.vino : isToday ? 'rgba(120,47,64,0.08)' : 'none',
+                color: isSelected ? 'white' : isToday ? colors.vino : colors.texto,
+                border: isToday && !isSelected ? '1px solid ' + colors.vino : '1px solid transparent',
+                borderRadius: '50%', width: '30px', height: '30px',
+                cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'Georgia, serif',
+                fontWeight: isSelected || isToday ? 'bold' : 'normal',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto', padding: 0,
+              }}
+            >
+              {day}
+            </button>
+          )
+        })}
+      </div>
+      {/* Go to today shortcut */}
+      <div style={{ textAlign: 'center', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #f0e8d8' }}>
+        <button
+          onClick={function() { onChange(new Date()); onClose() }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.vino, fontSize: '0.75rem', fontFamily: 'Georgia, serif' }}
+        >
+          {t.goToToday}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Date navigation bar ────────────────────────────────────────────────────────
+function DateNav({ date, onChange, lang, t }) {
+  var [showCal, setShowCal] = useState(false)
+
+  var dayName = t.dayNames[date.getDay()]
+  var day = date.getDate()
+  var monthName = t.monthNamesLong[date.getMonth()]
+  var year = date.getFullYear()
+  var formatted = lang === 'en'
+    ? dayName + ', ' + monthName + ' ' + day + ', ' + year
+    : dayName + ' ' + day + ' de ' + monthName + ', ' + year
+
+  function shift(delta) {
+    var d = new Date(date)
+    d.setDate(d.getDate() + delta)
+    onChange(d)
+  }
+
+  return (
+    <div style={{ textAlign: 'center', marginBottom: '1.25rem', position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+        <button
+          onClick={function() { shift(-1) }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.vino, fontSize: '1.3rem', padding: '0.15rem 0.4rem', lineHeight: 1, borderRadius: '4px' }}
+          aria-label="día anterior"
+        >‹</button>
+        <span
+          onClick={function() { setShowCal(function(v) { return !v }) }}
+          style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.texto, cursor: 'pointer', borderBottom: '1px dotted ' + colors.vino, paddingBottom: '0.1rem' }}
+        >
+          {formatted}
+        </span>
+        <button
+          onClick={function() { shift(1) }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.vino, fontSize: '1.3rem', padding: '0.15rem 0.4rem', lineHeight: 1, borderRadius: '4px' }}
+          aria-label="día siguiente"
+        >›</button>
+      </div>
+      {showCal && (
+        <>
+          <div onClick={function() { setShowCal(false) }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 199 }} />
+          <MiniCalendar date={date} onChange={onChange} onClose={function() { setShowCal(false) }} t={t} />
+        </>
+      )}
+    </div>
+  )
+}
+
 // ── Language toggle pill ──────────────────────────────────────────────────────
 function LangToggle({ lang, onChange }) {
   var pillStyle = {
@@ -1380,18 +1528,37 @@ function App() {
   var [loading, setLoading] = useState(false)
   var [checking, setChecking] = useState(true)
   var [lang, setLangState] = useState('es')
+  var [selectedDate, setSelectedDate] = useState(function() { return new Date() })
 
-  // Load lang from localStorage on mount
+  // Initialize lang and selectedDate from localStorage / URL on mount
   useEffect(function() {
     try {
       var saved = localStorage.getItem('lc_lang')
       if (saved === 'es' || saved === 'en') setLangState(saved)
+    } catch(e) {}
+
+    // Read date from URL pathname: /2026-05-31 or /hoy
+    try {
+      var path = window.location.pathname
+      var m = path.match(/^\/(\d{4}-\d{2}-\d{2})$/)
+      if (m) {
+        var d = new Date(m[1] + 'T12:00:00')
+        if (!isNaN(d)) setSelectedDate(d)
+      }
     } catch(e) {}
   }, [])
 
   function setLang(l) {
     setLangState(l)
     try { localStorage.setItem('lc_lang', l) } catch(e) {}
+  }
+
+  function changeDate(d) {
+    setSelectedDate(d)
+    var todayStr = toDateStr(new Date())
+    var selStr = toDateStr(d)
+    var url = selStr === todayStr ? '/' : '/' + selStr
+    try { window.history.pushState({}, '', url) } catch(e) {}
   }
 
   useEffect(function() {
@@ -1458,7 +1625,7 @@ function App() {
       <nav style={s.nav}>
         {tabs.map(function(tab) { return <button key={tab.id} style={s.navBtn(vista === tab.id)} onClick={function() { setVista(tab.id); setJournalAbierto(null) }}>{tab.label}</button> })}
       </nav>
-      {vista === 'hoy' && <ViewHoy tier={tier} onSwitchView={setVista} lang={lang} />}
+      {vista === 'hoy' && <ViewHoy tier={tier} onSwitchView={setVista} lang={lang} selectedDate={selectedDate} onDateChange={changeDate} />}
       {vista === 'diarios' && !journalAbierto && <ViewDiarios onOpen={function(j, u) { setJournalAbierto(j); setJournalUnit(u) }} tier={tier} user={user} lang={lang} />}
       {vista === 'diarios' && journalAbierto && <ViewJournal journal={journalAbierto} initialUnit={journalUnit} onBack={function() { setJournalAbierto(null) }} user={user} lang={lang} />}
       {vista === 'precios' && <ViewPricing onCheckout={handleCheckout} loading={loading} tier={tier} lang={lang} />}
