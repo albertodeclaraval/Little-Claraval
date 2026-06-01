@@ -1146,7 +1146,20 @@ function ViewRedeem({ user, lang }) {
   )
 }
 
-// ── Liturgia helpers (unchanged) ──────────────────────────────────────────────
+// ── Liturgia helpers ──────────────────────────────────────────────────────────
+function renderPsalmText(text, style) {
+  return text.split('\n\n').map(function(para, i) {
+    var lines = para.split('\n')
+    return (
+      <p key={i} style={Object.assign({}, style, { margin: '0 0 0.6rem' })}>
+        {lines.map(function(line, j) {
+          return j < lines.length - 1 ? [line, <br key={j} />] : line
+        })}
+      </p>
+    )
+  })
+}
+
 function LitugiaPsalterContent({ c, stl }) {
   if (!c) return <p style={s.p}>Contenido no disponible aún</p>
   function PsalmBlock({ ps, label }) {
@@ -1156,7 +1169,7 @@ function LitugiaPsalterContent({ c, stl }) {
         {label && <div style={stl.label}>{label}</div>}
         {ps.antiphon && <div style={stl.antiphon}>Ant. {ps.antiphon}</div>}
         {ps.ref && <div style={stl.psalmRef}>{ps.ref}</div>}
-        {ps.text && <div style={stl.prayer}>{ps.text}</div>}
+        {ps.text && renderPsalmText(ps.text, stl.prayer)}
         {ps.antiphon && <div style={stl.antiphon}>Ant. {ps.antiphon}</div>}
       </div>
     )
@@ -1251,6 +1264,7 @@ function LiturgiaContent({ data }) {
     prayer: { fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '0.75rem' },
     divider: { borderTop: '1px solid #e8dcc8', margin: '1rem 0' }
   }
+  console.log('branch:', (c.psalm1 !== undefined || c.psalm2 !== undefined) ? 'psalter' : 'psalms-array')
   if (c.psalm1 !== undefined || c.psalm2 !== undefined) {
     return <LitugiaPsalterContent c={c} stl={stl} />
   }
@@ -1296,7 +1310,7 @@ function LiturgiaContent({ data }) {
                   {ps.title && <div style={stl.psalmTitle}>{ps.title}</div>}
                   {ps.stanzas
                     ? ps.stanzas.map(function(st, j) { return <div key={j} style={stl.stanza}>{st}</div> })
-                    : (ps.text && <div style={stl.prayer}>{ps.text}</div>)}
+                    : (ps.text && renderPsalmText(ps.text, stl.prayer))}
                   {ps.antiphon && <div style={stl.antiphon}>Ant. {ps.antiphon}</div>}
                 </div>
               )
