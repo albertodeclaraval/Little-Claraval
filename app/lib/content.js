@@ -119,10 +119,13 @@ export async function fetchDayReadings(date, lang) {
     var litDay = await fetchLiturgicalDay(d)
     if (!litDay) return null
 
+    console.log('[fetchDayReadings] litDay:', JSON.stringify(litDay))
+
     var weekday = d.getDay()
     var season  = normalizeSeason(litDay.season)
     var feastKey = getFeastKey(litDay)
     var week = extractWeek(litDay.celebration && litDay.celebration.name)
+    if (week === null) week = litDay.week || (litDay.celebration && litDay.celebration.week) || null
     if (week === null && season === 'easter') week = easterWeek(d)
 
     var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
@@ -151,6 +154,7 @@ export async function fetchDayReflection(date, lang) {
     var season  = normalizeSeason(litDay.season)
     var feastKey = getFeastKey(litDay)
     var week = extractWeek(litDay.celebration && litDay.celebration.name)
+    if (week === null) week = litDay.week || (litDay.celebration && litDay.celebration.week) || null
     if (week === null && season === 'easter') week = easterWeek(d)
 
     var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
@@ -269,6 +273,7 @@ export async function getLiturgicalPosition(date) {
     var season = normalizeSeason(litDay.season)
     var feastKey = getFeastKey(litDay) || ''
     var week = extractWeek(litDay.celebration && litDay.celebration.name)
+    if (week === null) week = litDay.week || (litDay.celebration && litDay.celebration.week) || null
     if (week === null && season === 'easter') week = easterWeek(d)
     var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
 
