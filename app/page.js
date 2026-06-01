@@ -682,8 +682,13 @@ function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
                 {reflection.gospel_ref}
               </p>
             )}
-            {(reflection.silence || reflection.meditative_phrase || reflection.inner_question || reflection.brief_prayer) ? (
+            {(reflection.reflexion || reflection.silence || reflection.meditative_phrase || reflection.inner_question || reflection.brief_prayer) ? (
               <>
+                {reflection.reflexion && (
+                  <p style={Object.assign({}, s.p, { whiteSpace: 'pre-wrap', marginBottom: '1rem' })}>
+                    {reflection.reflexion}
+                  </p>
+                )}
                 {reflection.silence && (
                   <p style={Object.assign({}, s.p, { fontStyle: 'italic', color: '#777', marginBottom: '1rem' })}>
                     {reflection.silence}
@@ -1289,9 +1294,9 @@ function LiturgiaContent({ data }) {
                   {ps.antiphon && <div style={stl.antiphon}>Ant. {ps.antiphon}</div>}
                   {ps.ref && <div style={stl.psalmRef}>{ps.ref}</div>}
                   {ps.title && <div style={stl.psalmTitle}>{ps.title}</div>}
-                  {ps.stanzas && ps.stanzas.map(function(st, j) {
-                    return <div key={j} style={stl.stanza}>{st}</div>
-                  })}
+                  {ps.stanzas
+                    ? ps.stanzas.map(function(st, j) { return <div key={j} style={stl.stanza}>{st}</div> })
+                    : (ps.text && <div style={stl.prayer}>{ps.text}</div>)}
                   {ps.antiphon && <div style={stl.antiphon}>Ant. {ps.antiphon}</div>}
                 </div>
               )
@@ -1300,25 +1305,53 @@ function LiturgiaContent({ data }) {
           <div style={stl.divider} />
         </>
       )}
-      {c.reading && (
+      {c.canticle && (c.canticle.ref || c.canticle.text) && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Lectura breve</div>
-            {c.reading.ref && <div style={stl.psalmRef}>{c.reading.ref}</div>}
-            {c.reading.text && <div style={stl.prayer}>{c.reading.text}</div>}
+            <div style={stl.label}>Cántico</div>
+            {c.canticle.antiphon && <div style={stl.antiphon}>Ant. {c.canticle.antiphon}</div>}
+            {c.canticle.ref && <div style={stl.psalmRef}>{c.canticle.ref}</div>}
+            {c.canticle.text && <div style={stl.prayer}>{c.canticle.text}</div>}
+            {c.canticle.antiphon && <div style={stl.antiphon}>Ant. {c.canticle.antiphon}</div>}
           </div>
           <div style={stl.divider} />
         </>
       )}
-      {c.responsory && (
+      {(c.reading || c.short_reading) && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Responsorio breve</div>
-            {c.responsory?.v && <div style={stl.verse}>V. {c.responsory.v}</div>}
-            {c.responsory?.r && <div style={stl.response}>R. {c.responsory.r}</div>}
+            <div style={stl.label}>Lectura breve</div>
+            {(c.short_reading || c.reading).ref && <div style={stl.psalmRef}>{(c.short_reading || c.reading).ref}</div>}
+            {(c.short_reading || c.reading).text && <div style={stl.prayer}>{(c.short_reading || c.reading).text}</div>}
           </div>
           <div style={stl.divider} />
         </>
+      )}
+      {c.responsory && (c.responsory.v || c.responsory.r) && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Responsorio breve</div>
+            {c.responsory.v && <div style={stl.verse}>V. {c.responsory.v}</div>}
+            {c.responsory.r && <div style={stl.response}>R. {c.responsory.r}</div>}
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.intercessions && (
+        <>
+          <div style={stl.section}>
+            <div style={stl.label}>Preces</div>
+            <div style={stl.prayer}>{c.intercessions}</div>
+          </div>
+          <div style={stl.divider} />
+        </>
+      )}
+      {c.closing_prayer && (
+        <div style={stl.section}>
+          <div style={stl.label}>Oración</div>
+          <div style={stl.prayer}>{c.closing_prayer}</div>
+          <div style={stl.response}>R. Amén.</div>
+        </div>
       )}
       {c.nunc_dimittis && (
         <>

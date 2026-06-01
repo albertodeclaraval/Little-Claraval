@@ -156,6 +156,8 @@ export async function fetchDayReflection(date, lang) {
     var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
     var lg = lang || 'es'
 
+    console.log('[fetchDayReflection]', { dateStr: d.toISOString().slice(0,10), feastKey, cycle, season, weekday, week, lang: lg })
+
     // lectionary_reflections has no weekday column — reflections are per-week
     var data = await queryByPosition('lectionary_reflections', lg, season, feastKey, cycle, weekday, week, false)
 
