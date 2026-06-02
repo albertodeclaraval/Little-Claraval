@@ -121,7 +121,8 @@ async function queryByPosition(table, lang, season, feastKey, cycle, weekday, we
     if (includeWeekday) q = q.eq('weekday', weekday)
     if (week !== null && week !== undefined) q = q.eq('week', week)
   }
-  var { data } = await q.maybeSingle()
+  var { data, error } = await q.maybeSingle()
+  if (error) console.warn('[queryByPosition] error', { table, lang, season, feastKey, cycle, week, code: error.code, msg: error.message })
   return data || null
 }
 
@@ -174,7 +175,7 @@ export async function fetchDayReflection(date, lang) {
     var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
     var lg = lang || 'es'
 
-    console.log('[fetchDayReflection]', { dateStr: d.toISOString().slice(0,10), feastKey, cycle, season, weekday, week, lang: lg })
+    console.log('[fetchDayReflection] query', { date: d.toISOString().slice(0,10), feastKey, cycle, season, weekday, week, lang: lg })
 
     // lectionary_reflections has no weekday column — reflections are per-week
     var data = await queryByPosition('lectionary_reflections', lg, season, feastKey, cycle, weekday, week, false)
@@ -183,8 +184,23 @@ export async function fetchDayReflection(date, lang) {
       data = await queryByPosition('lectionary_reflections', lg, season, null, cycle, weekday, week, false)
     }
 
+    // EN fallback: if the EN row has no text content, fall back to ES so users
+    // see a reflection rather than "in preparation" while EN content is being written.
+    if (lg === 'en') {
+      var hasContent = data && (data.reflexion || data.silence || data.meditative_phrase || data.inner_question || data.brief_prayer)
+      if (!hasContent) {
+        var esData = await queryByPosition('lectionary_reflections', 'es', season, feastKey, cycle, weekday, week, false)
+        if (!esData && feastKey) {
+          esData = await queryByPosition('lectionary_reflections', 'es', season, null, cycle, weekday, week, false)
+        }
+        if (esData) data = esData
+      }
+    }
+
+    console.log('[fetchDayReflection] result', { lang: lg, found: !!data, hasReflexion: !!(data && data.reflexion) })
     return data
   } catch (e) {
+    console.error('[fetchDayReflection] unexpected error', e)
     return null
   }
 }

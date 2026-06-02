@@ -46,6 +46,7 @@ var T = {
     reflectionTitle: 'Reflexión — Alberto de Claraval',
     reflectionInPrep: 'Reflexión en preparación...',
     premiumBadge: 'PREMIUM — Nivel Peregrino', unlockBtn: 'Desbloquear — $1.99/mes',
+    reflectionPreview: 'El silencio es el umbral de la contemplación. En él, Dios habla al corazón sin palabras. Detente un momento antes de comenzar el día y deja que la Palabra resuene en ti.',
     saintOfDay: 'Santo del Día', noInfo: 'Información no disponible',
     patronOf: 'Patrono/a de:', canonizedIn: 'Canonizado en', canonizedBy: ' por ',
     prayerLabel: 'Oración',
@@ -111,6 +112,7 @@ var T = {
     reflectionTitle: 'Reflection — Alberto de Claraval',
     reflectionInPrep: 'Reflection in preparation...',
     premiumBadge: 'PREMIUM — Peregrino Level', unlockBtn: 'Unlock — $1.99/mo',
+    reflectionPreview: 'Silence is the threshold of contemplation. In it, God speaks to the heart without words. Pause a moment before beginning the day and let the Word resonate within you.',
     saintOfDay: 'Saint of the Day', noInfo: 'Information not available',
     patronOf: 'Patron of:', canonizedIn: 'Canonized in', canonizedBy: ' by ',
     prayerLabel: 'Prayer',
@@ -720,8 +722,7 @@ function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
               {t.premiumBadge}
             </div>
             <p style={Object.assign({}, s.p, { filter: 'blur(4px)', userSelect: 'none' })}>
-              El silencio es el umbral de la contemplación. En él, Dios habla al corazón sin palabras.
-              Detente un momento antes de comenzar el día y deja que la Palabra resuene en ti.
+              {t.reflectionPreview}
             </p>
             <button style={Object.assign({}, s.btn(colors.vino), { marginTop: '1rem' })} onClick={function() { onSwitchView && onSwitchView('precios') }}>
               {t.unlockBtn}
