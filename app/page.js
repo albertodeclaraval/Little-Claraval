@@ -800,7 +800,7 @@ function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
             highlight={hour >= 5 && hour < 12}
           >
             {lh.laudes && lh.laudes.content
-              ? <LiturgiaContent data={lh.laudes} />
+              ? <LiturgiaContent data={lh.laudes} lang={lang} />
               : <Proximamente t={t} />}
           </Accordion>
           <Accordion
@@ -810,7 +810,7 @@ function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
             highlight={hour >= 12 && hour < 20}
           >
             {lh.visperas && lh.visperas.content
-              ? <LiturgiaContent data={lh.visperas} />
+              ? <LiturgiaContent data={lh.visperas} lang={lang} />
               : <Proximamente t={t} />}
           </Accordion>
           <Accordion
@@ -820,7 +820,7 @@ function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
             highlight={hour >= 20 || hour < 5}
           >
             {lh.completas && lh.completas.content
-              ? <LiturgiaContent data={lh.completas} />
+              ? <LiturgiaContent data={lh.completas} lang={lang} />
               : <Proximamente t={t} />}
           </Accordion>
         </>}
@@ -1160,8 +1160,11 @@ function renderPsalmText(text, style) {
   })
 }
 
-function LitugiaPsalterContent({ c, stl }) {
+function LitugiaPsalterContent({ c, stl, lang }) {
   if (!c) return <p style={s.p}>Contenido no disponible aún</p>
+  var L = lang === 'en'
+    ? { hymn: 'Hymn', psalmody: 'Psalmody', canticle: 'Canticle', shortReading: 'Short Reading', responsory: 'Brief Responsory', intercessions: 'Intercessions', prayer: 'Prayer', amen: 'R. Amen.' }
+    : { hymn: 'Himno', psalmody: 'Salmodia', canticle: 'Cántico', shortReading: 'Lectura breve', responsory: 'Responsorio breve', intercessions: 'Preces', prayer: 'Oración', amen: 'R. Amén.' }
   function PsalmBlock({ ps, label }) {
     if (!ps) return null
     return (
@@ -1180,7 +1183,7 @@ function LitugiaPsalterContent({ c, stl }) {
       {c.hymn_text && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Himno</div>
+            <div style={stl.label}>{L.hymn}</div>
             <div style={stl.hymn}>{c.hymn_text}</div>
           </div>
           <div style={stl.divider} />
@@ -1189,13 +1192,13 @@ function LitugiaPsalterContent({ c, stl }) {
       {(c.psalm1 || c.psalm2 || c.psalm3 || c.canticle) && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Salmodia</div>
+            <div style={stl.label}>{L.psalmody}</div>
             <PsalmBlock ps={c.psalm1} label={null} />
             <PsalmBlock ps={c.psalm2} label={null} />
             <PsalmBlock ps={c.psalm3} label={null} />
             {c.canticle && (
               <div style={{ marginBottom: '1rem' }}>
-                <div style={stl.label}>Cántico</div>
+                <div style={stl.label}>{L.canticle}</div>
                 {c.canticle.antiphon && <div style={stl.antiphon}>Ant. {c.canticle.antiphon}</div>}
                 {c.canticle.ref && <div style={stl.psalmRef}>{c.canticle.ref}</div>}
                 {c.canticle.text && <div style={stl.prayer}>{c.canticle.text}</div>}
@@ -1209,7 +1212,7 @@ function LitugiaPsalterContent({ c, stl }) {
       {c.short_reading && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Lectura breve</div>
+            <div style={stl.label}>{L.shortReading}</div>
             {c.short_reading.ref && <div style={stl.psalmRef}>{c.short_reading.ref}</div>}
             {c.short_reading.text && <div style={stl.prayer}>{c.short_reading.text}</div>}
           </div>
@@ -1219,7 +1222,7 @@ function LitugiaPsalterContent({ c, stl }) {
       {c.responsory && (c.responsory.v || c.responsory.r) && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Responsorio breve</div>
+            <div style={stl.label}>{L.responsory}</div>
             {c.responsory.v && <div style={stl.verse}>V. {c.responsory.v}</div>}
             {c.responsory.r && <div style={stl.response}>R. {c.responsory.r}</div>}
           </div>
@@ -1229,7 +1232,7 @@ function LitugiaPsalterContent({ c, stl }) {
       {c.intercessions && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Preces</div>
+            <div style={stl.label}>{L.intercessions}</div>
             <div style={stl.prayer}>{c.intercessions}</div>
           </div>
           <div style={stl.divider} />
@@ -1237,19 +1240,22 @@ function LitugiaPsalterContent({ c, stl }) {
       )}
       {c.closing_prayer && (
         <div style={stl.section}>
-          <div style={stl.label}>Oración</div>
+          <div style={stl.label}>{L.prayer}</div>
           <div style={stl.prayer}>{c.closing_prayer}</div>
-          <div style={stl.response}>R. Amén.</div>
+          <div style={stl.response}>{L.amen}</div>
         </div>
       )}
     </div>
   )
 }
 
-function LiturgiaContent({ data }) {
+function LiturgiaContent({ data, lang }) {
   if (!data) return <p style={s.p}>Contenido no disponible aún</p>
   var c = data.content
   if (!c || typeof c === 'string') return <p style={s.p}>Contenido no disponible aún</p>
+  var L = lang === 'en'
+    ? { opening: 'Opening Invocation', hymn: 'Hymn', psalmody: 'Psalmody', canticle: 'Canticle', shortReading: 'Short Reading', responsory: 'Brief Responsory', intercessions: 'Intercessions', prayer: 'Prayer', amen: 'R. Amen.' }
+    : { opening: 'Invocación inicial', hymn: 'Himno', psalmody: 'Salmodia', canticle: 'Cántico', shortReading: 'Lectura breve', responsory: 'Responsorio breve', intercessions: 'Preces', prayer: 'Oración', amen: 'R. Amén.' }
   var stl = {
     section: { marginBottom: '1.25rem' },
     label: { fontSize: '0.7rem', color: colors.oro, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 'bold' },
@@ -1266,14 +1272,14 @@ function LiturgiaContent({ data }) {
   }
   console.log('branch:', (c.psalm1 !== undefined || c.psalm2 !== undefined) ? 'psalter' : 'psalms-array')
   if (c.psalm1 !== undefined || c.psalm2 !== undefined) {
-    return <LitugiaPsalterContent c={c} stl={stl} />
+    return <LitugiaPsalterContent c={c} stl={stl} lang={lang} />
   }
   return (
     <div>
       {c.opening && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Invocación inicial</div>
+            <div style={stl.label}>{L.opening}</div>
             {c.opening?.v && <div style={stl.verse}>V. {c.opening.v}</div>}
             {c.opening?.r && <div style={stl.response}>R. {c.opening.r}</div>}
             {c.opening?.gloria && <div style={stl.stanza}>{c.opening.gloria}</div>}
@@ -1292,7 +1298,7 @@ function LiturgiaContent({ data }) {
       {c.hymn && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Himno</div>
+            <div style={stl.label}>{L.hymn}</div>
             <div style={stl.hymn}>{c.hymn}</div>
           </div>
           <div style={stl.divider} />
@@ -1301,7 +1307,7 @@ function LiturgiaContent({ data }) {
       {c.psalms && c.psalms.length > 0 && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Salmodia</div>
+            <div style={stl.label}>{L.psalmody}</div>
             {c.psalms.map(function(ps, i) {
               return (
                 <div key={i} style={{ marginBottom: i < c.psalms.length - 1 ? '1.5rem' : 0 }}>
@@ -1322,7 +1328,7 @@ function LiturgiaContent({ data }) {
       {c.canticle && (c.canticle.ref || c.canticle.text) && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Cántico</div>
+            <div style={stl.label}>{L.canticle}</div>
             {c.canticle.antiphon && <div style={stl.antiphon}>Ant. {c.canticle.antiphon}</div>}
             {c.canticle.ref && <div style={stl.psalmRef}>{c.canticle.ref}</div>}
             {c.canticle.text && <div style={stl.prayer}>{c.canticle.text}</div>}
@@ -1334,7 +1340,7 @@ function LiturgiaContent({ data }) {
       {(c.reading || c.short_reading) && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Lectura breve</div>
+            <div style={stl.label}>{L.shortReading}</div>
             {(c.short_reading || c.reading).ref && <div style={stl.psalmRef}>{(c.short_reading || c.reading).ref}</div>}
             {(c.short_reading || c.reading).text && <div style={stl.prayer}>{(c.short_reading || c.reading).text}</div>}
           </div>
@@ -1344,7 +1350,7 @@ function LiturgiaContent({ data }) {
       {c.responsory && (c.responsory.v || c.responsory.r) && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Responsorio breve</div>
+            <div style={stl.label}>{L.responsory}</div>
             {c.responsory.v && <div style={stl.verse}>V. {c.responsory.v}</div>}
             {c.responsory.r && <div style={stl.response}>R. {c.responsory.r}</div>}
           </div>
@@ -1354,7 +1360,7 @@ function LiturgiaContent({ data }) {
       {c.intercessions && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Preces</div>
+            <div style={stl.label}>{L.intercessions}</div>
             <div style={stl.prayer}>{c.intercessions}</div>
           </div>
           <div style={stl.divider} />
@@ -1362,9 +1368,9 @@ function LiturgiaContent({ data }) {
       )}
       {c.closing_prayer && (
         <div style={stl.section}>
-          <div style={stl.label}>Oración</div>
+          <div style={stl.label}>{L.prayer}</div>
           <div style={stl.prayer}>{c.closing_prayer}</div>
-          <div style={stl.response}>R. Amén.</div>
+          <div style={stl.response}>{L.amen}</div>
         </div>
       )}
       {c.nunc_dimittis && (
@@ -1384,9 +1390,9 @@ function LiturgiaContent({ data }) {
       {c.prayer && (
         <>
           <div style={stl.section}>
-            <div style={stl.label}>Oración</div>
+            <div style={stl.label}>{L.prayer}</div>
             <div style={stl.prayer}>{c.prayer}</div>
-            <div style={stl.response}>R. Amén.</div>
+            <div style={stl.response}>{L.amen}</div>
           </div>
           <div style={stl.divider} />
         </>
