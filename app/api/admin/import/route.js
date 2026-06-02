@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-var supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+function adminClient() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+}
 var ADMIN_EMAILS = ['betoyac@gmail.com', 'albertodeclaraval@gmail.com']
 
 function parseCSVLine(line) {
@@ -62,7 +64,7 @@ async function importSantos(rows) {
     }
   })
   if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
-  var { error } = await supabaseAdmin.from('saints').upsert(mapped, { onConflict: 'month_day' })
+  var { error } = await adminClient().from('saints').upsert(mapped, { onConflict: 'month_day' })
   return { count: mapped.length, error: error ? error.message : null }
 }
 
@@ -94,7 +96,7 @@ async function importLecturas(rows) {
   if (deduped.length === 0) return { count: 0, error: 'No hay filas validas' }
   for (var i = 0; i < deduped.length; i += BATCH) {
     var batch = deduped.slice(i, i + BATCH)
-    var { error } = await supabaseAdmin.from('lectionary').upsert(batch, { onConflict: 'cycle,season,week,weekday,feast_key,lang' })
+    var { error } = await adminClient().from('lectionary').upsert(batch, { onConflict: 'cycle,season,week,weekday,feast_key,lang' })
     if (error) errors.push('batch ' + i + ': ' + error.message)
     else total += batch.length
   }
@@ -131,7 +133,7 @@ async function importReflexiones(rows) {
   if (deduped.length === 0) return { count: 0, error: 'No hay filas validas' }
   for (var i = 0; i < deduped.length; i += BATCH) {
     var batch = deduped.slice(i, i + BATCH)
-    var { error } = await supabaseAdmin.from('lectionary_reflections').upsert(batch, { onConflict: 'cycle,season,week,feast_key,lang' })
+    var { error } = await adminClient().from('lectionary_reflections').upsert(batch, { onConflict: 'cycle,season,week,feast_key,lang' })
     if (error) errors.push('batch ' + i + ': ' + error.message)
     else total += batch.length
   }
@@ -177,7 +179,7 @@ async function importLiturgia(rows, hourType) {
   var BATCH = 50, total = 0, errors = []
   for (var i = 0; i < deduped.length; i += BATCH) {
     var batch = deduped.slice(i, i + BATCH)
-    var { error } = await supabaseAdmin.from('liturgy_hours').upsert(batch, { onConflict: 'hour_type,psalter_week,weekday,season_variant,lang' })
+    var { error } = await adminClient().from('liturgy_hours').upsert(batch, { onConflict: 'hour_type,psalter_week,weekday,season_variant,lang' })
     if (error) errors.push('batch ' + i + ': ' + error.message)
     else total += batch.length
   }
@@ -213,7 +215,7 @@ async function importJournals(rows) {
   var BATCH = 200, total = 0, errors = []
   for (var i = 0; i < mapped.length; i += BATCH) {
     var batch = mapped.slice(i, i + BATCH)
-    var { error } = await supabaseAdmin.from('journal_content').upsert(batch, { onConflict: 'journal_slug,day_number,week_number,lang,question_number' })
+    var { error } = await adminClient().from('journal_content').upsert(batch, { onConflict: 'journal_slug,day_number,week_number,lang,question_number' })
     if (error) errors.push('batch ' + i + ': ' + error.message)
     else total += batch.length
   }
@@ -233,7 +235,7 @@ async function importJournalMetadata(rows) {
     }
   })
   if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
-  var { error } = await supabaseAdmin.from('journal_metadata').upsert(mapped, { onConflict: 'journal_slug,lang' })
+  var { error } = await adminClient().from('journal_metadata').upsert(mapped, { onConflict: 'journal_slug,lang' })
   if (error) return { count: 0, error: error.message }
   return { count: mapped.length, error: null }
 }
@@ -256,7 +258,7 @@ async function importBuenasNoches(rows) {
     }
   })
   if (mapped.length === 0) return { count: 0, error: 'No hay filas validas' }
-  var { error } = await supabaseAdmin.from('bedtime_stories').upsert(mapped, { onConflict: 'liturgical_period,cycle,story_number,lang' })
+  var { error } = await adminClient().from('bedtime_stories').upsert(mapped, { onConflict: 'liturgical_period,cycle,story_number,lang' })
   return { count: mapped.length, error: error ? error.message : null }
 }
 
@@ -265,7 +267,7 @@ export async function POST(request) {
     var authHeader = request.headers.get('authorization')
     if (!authHeader) return Response.json({ error: 'No autorizado' }, { status: 401 })
     var token = authHeader.replace('Bearer ', '')
-    var { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    var { data: { user }, error: authError } = await adminClient().auth.getUser(token)
     if (authError || !user || !ADMIN_EMAILS.includes(user.email)) {
       return Response.json({ error: 'No autorizado' }, { status: 401 })
     }
