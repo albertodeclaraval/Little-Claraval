@@ -35,6 +35,20 @@ function easterSunday(year) {
   return new Date(year, mo - 1, dy)
 }
 
+// Hardcoded post-Pentecost ordinary time resume dates for known years.
+// start = first Monday of resumed OT; week = OT week number of that Monday.
+var RESUMED_ORDINARY_TIME = {
+  2025: { start: new Date(2025, 5,  9), week: 9 },  // Mon Jun 9
+  2026: { start: new Date(2026, 4, 25), week: 8 },  // Mon May 25
+}
+
+function ordinaryTimeWeek(date) {
+  var d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  var entry = RESUMED_ORDINARY_TIME[date.getFullYear()]
+  if (!entry || d < entry.start) return null
+  return entry.week + Math.floor((d - entry.start) / (7 * 86400000))
+}
+
 // Week within Easter season (1 = Easter Sunday's week)
 function easterWeek(date) {
   var d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
@@ -119,14 +133,13 @@ export async function fetchDayReadings(date, lang) {
     var litDay = await fetchLiturgicalDay(d)
     if (!litDay) return null
 
-    console.log('[fetchDayReadings] litDay:', JSON.stringify(litDay))
-
     var weekday = d.getDay()
     var season  = normalizeSeason(litDay.season)
     var feastKey = getFeastKey(litDay)
     var week = extractWeek(litDay.celebration && litDay.celebration.name)
     if (week === null) week = litDay.week || (litDay.celebration && litDay.celebration.week) || null
     if (week === null && season === 'easter') week = easterWeek(d)
+    if (week === null && season === 'ordinary') week = ordinaryTimeWeek(d)
 
     var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
     var lg = lang || 'es'
@@ -156,6 +169,7 @@ export async function fetchDayReflection(date, lang) {
     var week = extractWeek(litDay.celebration && litDay.celebration.name)
     if (week === null) week = litDay.week || (litDay.celebration && litDay.celebration.week) || null
     if (week === null && season === 'easter') week = easterWeek(d)
+    if (week === null && season === 'ordinary') week = ordinaryTimeWeek(d)
 
     var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
     var lg = lang || 'es'
@@ -275,6 +289,7 @@ export async function getLiturgicalPosition(date) {
     var week = extractWeek(litDay.celebration && litDay.celebration.name)
     if (week === null) week = litDay.week || (litDay.celebration && litDay.celebration.week) || null
     if (week === null && season === 'easter') week = easterWeek(d)
+    if (week === null && season === 'ordinary') week = ordinaryTimeWeek(d)
     var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
 
     return {
