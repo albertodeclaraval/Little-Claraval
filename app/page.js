@@ -548,6 +548,7 @@ function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
   })
 
   useEffect(function() {
+    var cancelled = false
     setLoading(true)
     Promise.all([
       fetchDailyReadings(today),
@@ -562,6 +563,7 @@ function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
       fetchAppLinks(),
       fetchDayReadings(dateStr, lang)
     ]).then(function(r) {
+      if (cancelled) return
       setReadings(r[0])
       setLitDay(r[1])
       setSaint(r[2])
@@ -573,6 +575,7 @@ function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
       setSupabaseReadings(r[10])
       setLoading(false)
     })
+    return function() { cancelled = true }
   }, [lang, dateStr])
 
   function toggle(key) {
@@ -679,9 +682,9 @@ function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
           <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>{t.reflectionInPrep}</p>
         ) : canReflection ? (
           <div>
-            {reflection.gospel_ref && (
+            {(mergedGospel.ref || reflection.gospel_ref) && (
               <p style={{ fontSize: '0.75rem', color: colors.oro, marginBottom: '1rem', fontWeight: 'bold', letterSpacing: '0.05em' }}>
-                {reflection.gospel_ref}
+                {mergedGospel.ref || reflection.gospel_ref}
               </p>
             )}
             {(reflection.reflexion || reflection.silence || reflection.meditative_phrase || reflection.inner_question || reflection.brief_prayer) ? (

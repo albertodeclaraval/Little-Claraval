@@ -83,6 +83,7 @@ export async function PATCH(request) {
       cycle,
       feast_key: feastKey,
       week: weekVal,
+      reflexion: body.reflexion || null,
       silence: body.silence || null,
       meditative_phrase: body.meditative_phrase || null,
       inner_question: body.inner_question || null,

@@ -68,6 +68,7 @@ function LangEditor({ lang, data, onChange, onSave, saving, saved }) {
     <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '1.25rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', borderTop: '3px solid ' + accentColor }}>
       <span style={Object.assign({}, sectionTitle, { backgroundColor: accentColor, color: 'white' })}>{labelText}</span>
 
+      {field('reflexion', 'Reflexión principal / Main reflection', true, 6)}
       {field('silence', 'Silencio / Silence', true, 2)}
       {field('meditative_phrase', 'Frase meditativa / Meditative phrase', true, 2)}
       {field('inner_question', 'Pregunta interior / Inner question', true, 2)}
