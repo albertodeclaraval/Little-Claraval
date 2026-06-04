@@ -177,11 +177,10 @@ export async function fetchDayReflection(date, lang) {
 
     console.log('[fetchDayReflection] query', { date: d.toISOString().slice(0,10), feastKey, cycle, season, weekday, week, lang: lg })
 
-    // lectionary_reflections has no weekday column — reflections are per-week
-    var data = await queryByPosition('lectionary_reflections', lg, season, feastKey, cycle, weekday, week, false)
+    var data = await queryByPosition('lectionary_reflections', lg, season, feastKey, cycle, weekday, week, true)
 
     if (!data && feastKey) {
-      data = await queryByPosition('lectionary_reflections', lg, season, null, cycle, weekday, week, false)
+      data = await queryByPosition('lectionary_reflections', lg, season, null, cycle, weekday, week, true)
     }
 
     // EN fallback: if the EN row has no text content, fall back to ES so users
@@ -189,9 +188,9 @@ export async function fetchDayReflection(date, lang) {
     if (lg === 'en') {
       var hasContent = data && (data.reflexion || data.silence || data.meditative_phrase || data.inner_question || data.brief_prayer)
       if (!hasContent) {
-        var esData = await queryByPosition('lectionary_reflections', 'es', season, feastKey, cycle, weekday, week, false)
+        var esData = await queryByPosition('lectionary_reflections', 'es', season, feastKey, cycle, weekday, week, true)
         if (!esData && feastKey) {
-          esData = await queryByPosition('lectionary_reflections', 'es', season, null, cycle, weekday, week, false)
+          esData = await queryByPosition('lectionary_reflections', 'es', season, null, cycle, weekday, week, true)
         }
         if (esData) data = esData
       }
