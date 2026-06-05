@@ -1675,6 +1675,7 @@ function App() {
         <span style={s.logo}>Little Claraval</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <LangToggle lang={lang} onChange={setLang} />
+          {!user && <a href="/login" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem', textDecoration: 'none', letterSpacing: '0.05em' }}>admin</a>}
           {user && <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>{user.email}</span>}
           {user && <button onClick={function() { supabase.auth.signOut().then(function() { window.location.href = '/login' }) }} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.7rem' }}>{t.signOut}</button>}
         </div>
