@@ -103,7 +103,7 @@ async function importLecturas(rows) {
   return { count: total, error: errors.length > 0 ? errors.join('; ') : null }
 }
 
-// reflexiones → lectionary_reflections (upsert on cycle,season,week,feast_key,lang)
+// reflexiones → lectionary_reflections (upsert on cycle,season,week,weekday,feast_key,lang)
 // Excel cols: cycle, season, week, weekday, feast_key, lang, title, liturgical_color,
 //             gospel_ref, gospel_text, reflexion, silence, meditative_phrase, inner_question,
 //             brief_prayer, spiritual_school, theme, tags
@@ -113,12 +113,12 @@ async function importReflexiones(rows) {
   var valid = rows.filter(function(r) { return r.lang })
   for (var i = 0; i < valid.length; i++) {
     var r = valid[i]
-    var key = [(clean(r.cycle)||''), (clean(r.season)||''), toNumOrDefault(r.week,0), (clean(r.feast_key)||''), r.lang].join('|')
+    var key = [(clean(r.cycle)||''), (clean(r.season)||''), toNumOrDefault(r.week,0), toNumOrDefault(r.weekday,0), (clean(r.feast_key)||''), r.lang].join('|')
     if (seen[key]) continue
     seen[key] = true
     deduped.push({
       cycle: clean(r.cycle) || '', season: clean(r.season) || '',
-      week: toNumOrDefault(r.week, 0), feast_key: clean(r.feast_key) || '',
+      week: toNumOrDefault(r.week, 0), weekday: toNumOrDefault(r.weekday, 0), feast_key: clean(r.feast_key) || '',
       lang: r.lang, title: clean(r.title), liturgical_color: clean(r.liturgical_color),
       gospel_ref: clean(r.gospel_ref), gospel_text: clean(r.gospel_text),
       reflexion: clean(r.reflexion),
@@ -133,7 +133,7 @@ async function importReflexiones(rows) {
   if (deduped.length === 0) return { count: 0, error: 'No hay filas validas' }
   for (var i = 0; i < deduped.length; i += BATCH) {
     var batch = deduped.slice(i, i + BATCH)
-    var { error } = await adminClient().from('lectionary_reflections').upsert(batch, { onConflict: 'cycle,season,week,feast_key,lang' })
+    var { error } = await adminClient().from('lectionary_reflections').upsert(batch, { onConflict: 'cycle,season,week,weekday,feast_key,lang' })
     if (error) errors.push('batch ' + i + ': ' + error.message)
     else total += batch.length
   }
