@@ -76,6 +76,7 @@ var T = {
     redeemPageTitle: 'Canjear codigo',
     redeemPageDesc: 'Si tienes un codigo promocional o de un journal fisico, ingresalo aqui.',
     redeemBtn: 'Canjear', redeeming: 'Canjeando...', signOut: 'Salir',
+    signInBtn: 'Sign In / Sign Up', signInToRead: 'Inicia sesión para leer la reflexión', subscribeToRead: 'Suscríbete para leer la reflexión diaria',
     rosarySteps: [
       'Señal de la Cruz', 'Credo',
       '1 Padrenuestro + 3 Ave Marías + Gloria',
@@ -142,6 +143,7 @@ var T = {
     redeemPageTitle: 'Redeem code',
     redeemPageDesc: 'If you have a promotional code or from a physical journal, enter it here.',
     redeemBtn: 'Redeem', redeeming: 'Redeeming...', signOut: 'Sign out',
+    signInBtn: 'Sign In / Sign Up', signInToRead: 'Sign in to read the reflection', subscribeToRead: 'Subscribe to read the daily reflection',
     rosarySteps: [
       'Sign of the Cross', "Apostles' Creed",
       '1 Our Father + 3 Hail Marys + Glory Be',
@@ -519,7 +521,7 @@ function RosarioContent({ rosary, weekday, t, lang }) {
 }
 
 // ── ViewHoy ──────────────────────────────────────────────────────────────────
-function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
+function ViewHoy({ tier, user, onSwitchView, lang, selectedDate, onDateChange }) {
   var t = T[lang] || T.es
   var canReflection = (TIER_LEVELS[tier] || 0) >= 1
 
@@ -720,17 +722,18 @@ function ViewHoy({ tier, onSwitchView, lang, selectedDate, onDateChange }) {
             )}
           </div>
         ) : (
-          <>
-            <div style={Object.assign({}, s.badge(colors.vino), { fontSize: '0.7rem', marginBottom: '0.75rem' })}>
-              {t.premiumBadge}
-            </div>
-            <p style={Object.assign({}, s.p, { filter: 'blur(4px)', userSelect: 'none' })}>
-              {t.reflectionPreview}
+          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔒</div>
+            <p style={Object.assign({}, s.p, { marginBottom: '1rem' })}>
+              {user ? t.subscribeToRead : t.signInToRead}
             </p>
-            <button style={Object.assign({}, s.btn(colors.vino), { marginTop: '1rem' })} onClick={function() { onSwitchView && onSwitchView('precios') }}>
-              {t.unlockBtn}
+            <button
+              style={Object.assign({}, s.btn(colors.vino), { marginTop: 0 })}
+              onClick={function() { user ? (onSwitchView && onSwitchView('precios')) : (window.location.href = '/login') }}
+            >
+              {user ? t.unlockBtn : t.signInBtn}
             </button>
-          </>
+          </div>
         ))}
       </div>
 
@@ -1662,11 +1665,6 @@ function App() {
 
   if (checking) return <div style={{ backgroundColor: colors.pergamino, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', color: colors.vino }}>{t.loading}</div>
 
-  if (!user) {
-    if (typeof window !== 'undefined') window.location.replace('/login')
-    return <div style={{ backgroundColor: colors.pergamino, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', color: colors.vino }}>{t.loading}</div>
-  }
-
   var tabs = [
     { id: 'hoy', label: t.today },
     { id: 'diarios', label: t.journals },
@@ -1680,6 +1678,7 @@ function App() {
         <span style={s.logo}>Little Claraval</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <LangToggle lang={lang} onChange={setLang} />
+          {!user && <button onClick={function() { window.location.href = '/login' }} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.7rem' }}>{t.signInBtn}</button>}
           {user && <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>{user.email}</span>}
           {user && <button onClick={function() { supabase.auth.signOut().then(function() { window.location.href = '/login' }) }} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.7rem' }}>{t.signOut}</button>}
         </div>
@@ -1687,7 +1686,7 @@ function App() {
       <nav style={s.nav}>
         {tabs.map(function(tab) { return <button key={tab.id} style={s.navBtn(vista === tab.id)} onClick={function() { setVista(tab.id); setJournalAbierto(null) }}>{tab.label}</button> })}
       </nav>
-      {vista === 'hoy' && <ViewHoy tier={tier} onSwitchView={setVista} lang={lang} selectedDate={selectedDate} onDateChange={changeDate} />}
+      {vista === 'hoy' && <ViewHoy tier={tier} user={user} onSwitchView={setVista} lang={lang} selectedDate={selectedDate} onDateChange={changeDate} />}
       {vista === 'diarios' && !journalAbierto && <ViewDiarios onOpen={function(j, u) { setJournalAbierto(j); setJournalUnit(u) }} tier={tier} user={user} lang={lang} />}
       {vista === 'diarios' && journalAbierto && <ViewJournal journal={journalAbierto} initialUnit={journalUnit} onBack={function() { setJournalAbierto(null) }} user={user} lang={lang} />}
       {vista === 'precios' && <ViewPricing onCheckout={handleCheckout} loading={loading} tier={tier} lang={lang} />}
