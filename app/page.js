@@ -101,6 +101,12 @@ var T = {
     monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
     monthNamesLong: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
     goToToday: 'Hoy',
+    catalogTab: 'Catálogo',
+    catalogTitle: 'Obtén tus diarios',
+    catalogSubtitle: 'Diarios de oración y examen para cada camino. Disponibles con un plan.',
+    getIt: 'Obtener con un plan',
+    includedInPlan: 'Incluido en tu plan',
+    audienceLabels: { hombres: 'Para hombres', mujeres: 'Para mujeres', todos: 'Para todos' },
   },
   en: {
     today: 'Today', journals: 'Journals', plans: 'Plans', redeem: 'Redeem',
@@ -168,6 +174,12 @@ var T = {
     monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
     monthNamesLong: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
     goToToday: 'Today',
+    catalogTab: 'Catalog',
+    catalogTitle: 'Get Your Journals',
+    catalogSubtitle: 'Prayer and examination journals for every path. Available with a plan.',
+    getIt: 'Get it with a plan',
+    includedInPlan: 'Included in your plan',
+    audienceLabels: { hombres: 'For men', mujeres: 'For women', todos: 'For everyone' },
   },
 }
 
@@ -1578,6 +1590,69 @@ function LangToggle({ lang, onChange }) {
   )
 }
 
+// ── ViewCatalog (Get Your Journals) ─────────────────────────────────────────
+function ViewCatalog({ onSwitchView, tier, lang }) {
+  var t = T[lang] || T.es
+  var [journals, setJournals] = useState([])
+  var [loading, setLoading] = useState(true)
+
+  useEffect(function() {
+    setLoading(true)
+    supabase
+      .from('journal_metadata')
+      .select('journal_slug, title, description, cover_url, audience, sort_order')
+      .eq('lang', lang)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+      .then(function(r) { setJournals(r.data || []); setLoading(false) })
+  }, [lang])
+
+  var hasAll = tier === 'claraval'
+  function audienceColor(a) { return a === 'hombres' ? colors.azul : a === 'mujeres' ? colors.vino : colors.verde }
+
+  return (
+    <div style={s.content}>
+      <h2 style={Object.assign({}, s.h1, { marginBottom: '0.25rem' })}>{t.catalogTitle}</h2>
+      <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '1.5rem' }}>{t.catalogSubtitle}</p>
+      {loading ? <p style={{ color: '#888' }}>{t.loading}</p> : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          {journals.map(function(j) {
+            return (
+              <div key={j.journal_slug} style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ width: '100%', aspectRatio: '4 / 5', backgroundColor: '#ece3d2', overflow: 'hidden' }}>
+                  {j.cover_url && (
+                    <img src={j.cover_url} alt={j.title || j.journal_slug}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      onError={function(e) { e.target.style.display = 'none' }} />
+                  )}
+                </div>
+                <div style={{ padding: '0.85rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: colors.texto, marginBottom: '0.35rem' }}>{j.title || j.journal_slug}</div>
+                  {j.audience && (
+                    <div style={{ alignSelf: 'flex-start', backgroundColor: audienceColor(j.audience), color: 'white', borderRadius: '20px', padding: '0.1rem 0.6rem', fontSize: '0.68rem', marginBottom: '0.5rem' }}>
+                      {(t.audienceLabels && t.audienceLabels[j.audience]) || ''}
+                    </div>
+                  )}
+                  {j.description && (
+                    <p style={{ fontSize: '0.78rem', color: '#777', lineHeight: 1.5, margin: '0 0 0.85rem' }}>
+                      {j.description.length > 120 ? j.description.slice(0, 120) + '…' : j.description}
+                    </p>
+                  )}
+                  <div style={{ marginTop: 'auto' }}>
+                    {hasAll
+                      ? <div style={Object.assign({}, s.badge(colors.verde), { marginBottom: 0 })}>{t.includedInPlan}</div>
+                      : <button style={Object.assign({}, s.btn(colors.vino), { marginTop: 0, fontSize: '0.82rem', padding: '0.6rem' })} onClick={function() { onSwitchView && onSwitchView('precios') }}>{t.getIt}</button>}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── App root ──────────────────────────────────────────────────────────────────
 function App() {
   var [vista, setVista] = useState('hoy')
@@ -1668,6 +1743,7 @@ function App() {
   var tabs = [
     { id: 'hoy', label: t.today },
     { id: 'diarios', label: t.journals },
+    { id: 'catalogo', label: t.catalogTab },
     { id: 'precios', label: t.plans },
     { id: 'canjear', label: t.redeem },
   ]
@@ -1689,6 +1765,7 @@ function App() {
       {vista === 'hoy' && <ViewHoy tier={tier} user={user} onSwitchView={setVista} lang={lang} selectedDate={selectedDate} onDateChange={changeDate} />}
       {vista === 'diarios' && !journalAbierto && <ViewDiarios onOpen={function(j, u) { setJournalAbierto(j); setJournalUnit(u) }} tier={tier} user={user} lang={lang} />}
       {vista === 'diarios' && journalAbierto && <ViewJournal journal={journalAbierto} initialUnit={journalUnit} onBack={function() { setJournalAbierto(null) }} user={user} lang={lang} />}
+      {vista === 'catalogo' && <ViewCatalog onSwitchView={setVista} tier={tier} lang={lang} />}
       {vista === 'precios' && <ViewPricing onCheckout={handleCheckout} loading={loading} tier={tier} lang={lang} />}
       {vista === 'canjear' && <ViewRedeem user={user} lang={lang} />}
     </div>
