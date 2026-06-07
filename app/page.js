@@ -903,9 +903,22 @@ function ViewHoy({ tier, user, onSwitchView, lang, selectedDate, onDateChange })
 // ── ViewDiarios ───────────────────────────────────────────────────────────────
 function ViewDiarios({ onOpen, tier, user, lang }) {
   var t = T[lang] || T.es
-  var limit = tier === 'claraval' ? 999 : tier === 'discipulo' ? 3 : tier === 'peregrino' ? 1 : 0
+  var en = lang === 'en'
+  var allUnlocked = tier === 'claraval'
+  var slotCount = tier === 'claraval' ? 999 : tier === 'discipulo' ? 3 : tier === 'peregrino' ? 1 : 0
+
   var [progress, setProgress] = useState({})
   var [journalMetas, setJournalMetas] = useState({})
+  var [entitled, setEntitled] = useState(null)   // null = cargando; array de slugs
+  var [busy, setBusy] = useState(null)
+
+  function loadEntitlements() {
+    if (!user) { setEntitled([]); return }
+    supabase.from('user_journal_entitlements').select('journal_slug').eq('user_id', user.id).then(function(r) {
+      setEntitled((r.data || []).map(function(row) { return row.journal_slug }))
+    })
+  }
+  useEffect(function() { loadEntitlements() }, [user])
 
   useEffect(function() {
     if (!user) return
@@ -927,29 +940,96 @@ function ViewDiarios({ onOpen, tier, user, lang }) {
     })
   }, [lang])
 
+  var entitledSet = {}
+  var entArr = entitled || []
+  entArr.forEach(function(sl) { entitledSet[sl] = true })
+  var usedSlots = allUnlocked ? 0 : entArr.length
+  var slotsLeft = Math.max(0, slotCount - usedSlots)
+  var showSelector = !allUnlocked && slotCount > 0
+  function isUnlocked(slug) { return allUnlocked || !!entitledSet[slug] }
+
+  function claim(slug) {
+    if (busy) return
+    setBusy(slug)
+    supabase.rpc('claim_journal', { p_slug: slug }).then(function(r) {
+      setBusy(null)
+      if (r.error) { alert(en ? 'Could not select this journal.' : 'No se pudo elegir este diario.'); return }
+      loadEntitlements()
+    })
+  }
+  function release(slug) {
+    if (busy) return
+    var ok = window.confirm(en ? 'Release this journal? You can choose another in its place.' : '¿Soltar este diario? Podrás elegir otro en su lugar.')
+    if (!ok) return
+    setBusy(slug)
+    supabase.rpc('release_journal', { p_slug: slug }).then(function(r) {
+      setBusy(null)
+      if (r.error) { alert(en ? 'Could not release.' : 'No se pudo soltar.'); return }
+      loadEntitlements()
+    })
+  }
+
   return (
     <div style={s.content}>
       <h2 style={Object.assign({}, s.h1, { marginBottom: '0.25rem' })}>{t.myJournals}</h2>
-      <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '1.5rem' }}>{t.journalSubtitle}</p>
-      <div style={s.journalGrid}>
-        {JOURNALS.map(function(j, i) {
-          var locked = i >= limit
-          var unit = progress[j.slug] || 0
-          var pct = Math.round((unit / j.total) * 100)
-          var unitLabel = j.type === 'weekly' ? t.weekLabel : t.dayLabel
-          var meta = journalMetas[j.slug]
-          var desc = meta && meta.description ? (meta.description.length > 80 ? meta.description.slice(0, 80) + '...' : meta.description) : null
-          var title = lang === 'en' ? (j.titleEn || j.title) : j.title
-          return (
-            <div key={j.slug} style={Object.assign({}, s.journalCard, { opacity: locked ? 0.5 : 1, cursor: locked ? 'default' : 'pointer' })} onClick={function() { if (!locked) onOpen(j, unit + 1) }}>
-              <div style={{ fontSize: '0.7rem', color: colors.oro, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.35rem' }}>{locked ? t.locked : unitLabel + ' ' + (unit + 1) + ' / ' + j.total}</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: colors.texto }}>{title}</div>
-              {desc && <p style={{ fontSize: '0.78rem', color: '#888', lineHeight: 1.4, marginTop: '0.3rem', marginBottom: 0 }}>{desc}</p>}
-              {!locked && <div style={{ height: '4px', backgroundColor: '#f0e8d8', borderRadius: '2px', marginTop: '0.75rem' }}><div style={{ height: '4px', width: pct + '%', backgroundColor: colors.oro, borderRadius: '2px' }} /></div>}
-            </div>
-          )
-        })}
-      </div>
+      <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: showSelector ? '0.75rem' : '1.5rem' }}>{t.journalSubtitle}</p>
+
+      {showSelector && (
+        <div style={{ backgroundColor: '#fdf8f0', border: '1px solid #e8dcc8', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.85rem', color: '#6b5b4b' }}>
+          {en
+            ? 'You have chosen ' + usedSlots + ' of ' + slotCount + ' journal' + (slotCount > 1 ? 's' : '') + '. '
+              + (slotsLeft > 0 ? 'Tap "Choose" to unlock ' + (slotsLeft > 1 ? slotsLeft + ' more' : 'one more') + '.' : 'To swap, release one first.')
+            : 'Has elegido ' + usedSlots + ' de ' + slotCount + ' diario' + (slotCount > 1 ? 's' : '') + '. '
+              + (slotsLeft > 0 ? 'Toca «Elegir» para desbloquear ' + (slotsLeft > 1 ? slotsLeft + ' más' : 'uno más') + '.' : 'Para cambiar, suelta uno primero.')}
+        </div>
+      )}
+
+      {entitled === null ? (
+        <p style={{ color: '#888' }}>{t.loading}</p>
+      ) : (
+        <div style={s.journalGrid}>
+          {JOURNALS.map(function(j) {
+            var unlocked = isUnlocked(j.slug)
+            var unit = progress[j.slug] || 0
+            var pct = Math.round((unit / j.total) * 100)
+            var unitLabel = j.type === 'weekly' ? t.weekLabel : t.dayLabel
+            var meta = journalMetas[j.slug]
+            var desc = meta && meta.description ? (meta.description.length > 80 ? meta.description.slice(0, 80) + '...' : meta.description) : null
+            var title = en ? (j.titleEn || j.title) : j.title
+            var canClaim = !unlocked && showSelector && slotsLeft > 0
+            var isBusy = busy === j.slug
+            return (
+              <div key={j.slug} style={Object.assign({}, s.journalCard, { opacity: unlocked ? 1 : 0.55, cursor: unlocked ? 'pointer' : 'default' })}
+                   onClick={function() { if (unlocked) onOpen(j, unit + 1) }}>
+                <div style={{ fontSize: '0.7rem', color: colors.oro, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                  {unlocked ? unitLabel + ' ' + (unit + 1) + ' / ' + j.total : t.locked}
+                </div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: colors.texto }}>{title}</div>
+                {desc && <p style={{ fontSize: '0.78rem', color: '#888', lineHeight: 1.4, marginTop: '0.3rem', marginBottom: 0 }}>{desc}</p>}
+                {unlocked && !allUnlocked && (
+                  <button onClick={function(e) { e.stopPropagation(); release(j.slug) }} disabled={isBusy}
+                          style={{ background: 'none', border: 'none', color: colors.azul, cursor: 'pointer', fontSize: '0.72rem', padding: '0.4rem 0 0', marginTop: '0.3rem' }}>
+                    {isBusy ? '…' : (en ? 'Release' : 'Soltar')}
+                  </button>
+                )}
+                {canClaim && (
+                  <button onClick={function(e) { e.stopPropagation(); claim(j.slug) }} disabled={isBusy}
+                          style={Object.assign({}, s.btn(colors.vino), { marginTop: '0.6rem', fontSize: '0.8rem', padding: '0.5rem' })}>
+                    {isBusy ? '…' : (en ? 'Choose' : 'Elegir')}
+                  </button>
+                )}
+                {unlocked && <div style={{ height: '4px', backgroundColor: '#f0e8d8', borderRadius: '2px', marginTop: '0.75rem' }}><div style={{ height: '4px', width: pct + '%', backgroundColor: colors.oro, borderRadius: '2px' }} /></div>}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {tier === 'free' && (
+        <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '1.25rem', textAlign: 'center' }}>
+          {en ? 'Choose a plan to unlock journals.' : 'Elige un plan para desbloquear diarios.'}
+        </p>
+      )}
     </div>
   )
 }
