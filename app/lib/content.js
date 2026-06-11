@@ -142,14 +142,19 @@ export async function fetchDayReadings(date, lang) {
     if (week === null && season === 'easter') week = easterWeek(d)
     if (week === null && season === 'ordinary') week = ordinaryTimeWeek(d)
 
-    var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
+    // Annual solemnities use liturgical-year cycle (A/B/C) regardless of weekday;
+    // ordinary ferial days use weekday cycle (I/II).
+    var cycle = (feastKey || weekday === 0) ? sundayCycle(d) : weekdayCycle(d)
+    var ferialCycle = weekday === 0 ? cycle : weekdayCycle(d)
     var lg = lang || 'es'
 
     var data = await queryByPosition('lectionary', lg, season, feastKey, cycle, weekday, week, true)
-
-    // If known fixed feast has no row, fall back to the weekday reading
+    // Some feasts are stored cycle='FIXED' (same reading every year — Nativity, Epiphany, etc.)
     if (!data && feastKey) {
-      data = await queryByPosition('lectionary', lg, season, null, cycle, weekday, week, true)
+      data = await queryByPosition('lectionary', lg, season, feastKey, 'FIXED', weekday, week, true)
+    }
+    if (!data && feastKey) {
+      data = await queryByPosition('lectionary', lg, season, null, ferialCycle, weekday, week, true)
     }
 
     return data
@@ -172,15 +177,18 @@ export async function fetchDayReflection(date, lang) {
     if (week === null && season === 'easter') week = easterWeek(d)
     if (week === null && season === 'ordinary') week = ordinaryTimeWeek(d)
 
-    var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
+    var cycle = (feastKey || weekday === 0) ? sundayCycle(d) : weekdayCycle(d)
+    var ferialCycle = weekday === 0 ? cycle : weekdayCycle(d)
     var lg = lang || 'es'
 
     console.log('[fetchDayReflection] query', { date: d.toISOString().slice(0,10), feastKey, cycle, season, weekday, week, lang: lg })
 
     var data = await queryByPosition('lectionary_reflections', lg, season, feastKey, cycle, weekday, week, true)
-
     if (!data && feastKey) {
-      data = await queryByPosition('lectionary_reflections', lg, season, null, cycle, weekday, week, true)
+      data = await queryByPosition('lectionary_reflections', lg, season, feastKey, 'FIXED', weekday, week, true)
+    }
+    if (!data && feastKey) {
+      data = await queryByPosition('lectionary_reflections', lg, season, null, ferialCycle, weekday, week, true)
     }
 
     // EN fallback: if the EN row has no text content, fall back to ES so users
@@ -190,7 +198,10 @@ export async function fetchDayReflection(date, lang) {
       if (!hasContent) {
         var esData = await queryByPosition('lectionary_reflections', 'es', season, feastKey, cycle, weekday, week, true)
         if (!esData && feastKey) {
-          esData = await queryByPosition('lectionary_reflections', 'es', season, null, cycle, weekday, week, true)
+          esData = await queryByPosition('lectionary_reflections', 'es', season, feastKey, 'FIXED', weekday, week, true)
+        }
+        if (!esData && feastKey) {
+          esData = await queryByPosition('lectionary_reflections', 'es', season, null, ferialCycle, weekday, week, true)
         }
         if (esData) data = esData
       }
@@ -305,7 +316,7 @@ export async function getLiturgicalPosition(date) {
     if (week === null) week = litDay.week || (litDay.celebration && litDay.celebration.week) || null
     if (week === null && season === 'easter') week = easterWeek(d)
     if (week === null && season === 'ordinary') week = ordinaryTimeWeek(d)
-    var cycle = weekday === 0 ? sundayCycle(d) : weekdayCycle(d)
+    var cycle = (feastKey || weekday === 0) ? sundayCycle(d) : weekdayCycle(d)
 
     return {
       season, feastKey, cycle,
