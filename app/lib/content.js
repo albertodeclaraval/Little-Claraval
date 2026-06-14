@@ -8,7 +8,7 @@ function normalizeSeason(apiSeason) {
   var s = apiSeason.toLowerCase()
   if (s.includes('advent')) return 'advent'
   if (s.includes('christmas')) return 'christmas'
-  if (s.includes('lent')) return 'lent'
+  if (s.includes('lent') || s.includes('holy week')) return 'lent'
   if (s.includes('easter') || s.includes('eastertide')) return 'easter'
   return 'ordinary'
 }
@@ -88,6 +88,8 @@ var FEAST_KEY_MAP = {
   epiphany:              ['epiphany of the lord'],
   holy_family:           ['holy family'],
   mary_mother:           ['mary, mother of god', 'solemnity of mary'],
+  ash_wednesday:         ['ash wednesday'],
+  palm_sunday:           ['palm sunday'],
   ascension:             ['ascension of the lord'],
   pentecost:             ['pentecost sunday'],
   trinity:               ['most holy trinity', 'trinity sunday'],
@@ -96,6 +98,7 @@ var FEAST_KEY_MAP = {
   assumption:            ['assumption of the blessed virgin mary'],
   all_saints:            ['all saints'],
   immaculate_conception: ['immaculate conception'],
+  christ_king:           ['christ the king', 'christ, king of the universe'],
 }
 
 function getFeastKey(litDay) {
