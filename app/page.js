@@ -1207,46 +1207,59 @@ function ViewJournal({ journal, initialUnit, onBack, user, lang }) {
                 </div>
               ) : <p style={{ color: '#888', fontStyle: 'italic' }}>{t.loading}</p>
             ) : (
-              <>
-                {metadata && metadata.opening_prayer && (
-                  <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f0e8d8' }}>
-                    <span style={{ color: colors.vino, marginRight: '0.4rem' }}>✠</span>{metadata.opening_prayer}
-                  </p>
+              <div style={{ position: 'relative', userSelect: 'none' }} onContextMenu={function(e) { e.preventDefault() }}>
+                {user && user.email && (
+                  <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+                    {[0,1,2,3,4,5,6,7].map(function(i) {
+                      return (
+                        <div key={i} style={{ position: 'absolute', top: (i * 130) + 'px', left: '-30%', width: '160%', fontSize: '0.7rem', color: '#782F40', opacity: 0.06, transform: 'rotate(-35deg)', letterSpacing: '0.25em', whiteSpace: 'nowrap', userSelect: 'none' }}>
+                          {user.email + '   ·   ' + user.email + '   ·   ' + user.email}
+                        </div>
+                      )
+                    })}
+                  </div>
                 )}
-                {displayQuestions.map(function(q, i) {
-                  var qn = q.question_number || 1
-                  var isLast = i === displayQuestions.length - 1
-                  return (
-                    <div key={qn} style={{ borderBottom: isLast ? 'none' : '1px solid #f0e8d8', paddingBottom: isLast ? 0 : '1rem', marginBottom: isLast ? 0 : '1rem' }}>
-                      {q.title && <p style={{ fontWeight: 'bold', fontSize: '0.9rem', color: colors.vino, margin: '0 0 0.5rem' }}>{q.title}</p>}
-                      {q.content && <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, fontSize: '0.95rem', color: '#444', margin: '0 0 0.5rem' }}>{q.content}</p>}
-                      <textarea
-                        key={journal.slug + '-' + currentUnit + '-' + qn}
-                        style={s.textarea}
-                        value={answers[qn] || ''}
-                        onChange={function(e) {
-                          var val = e.target.value
-                          setAnswers(function(prev) {
-                            var next = Object.assign({}, prev, { [qn]: val })
-                            if (debounceRef.current) clearTimeout(debounceRef.current)
-                            debounceRef.current = setTimeout(function() {
-                              lsJournalSave(journal.slug, currentUnit, lang, next)
-                            }, 500)
-                            return next
-                          })
-                        }}
-                        placeholder={t.writeHere}
-                      />
-                    </div>
-                  )
-                })}
-                <button style={s.btn(saved ? colors.verde : colors.vino)} onClick={handleSave} disabled={saving}>{saving ? t.saving : saved ? t.saved : t.save}</button>
-                {metadata && metadata.closing_prayer && (
-                  <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f0e8d8' }}>
-                    <span style={{ color: colors.vino, marginRight: '0.4rem' }}>✠</span>{metadata.closing_prayer}
-                  </p>
-                )}
-              </>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  {metadata && metadata.opening_prayer && (
+                    <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f0e8d8' }}>
+                      <span style={{ color: colors.vino, marginRight: '0.4rem' }}>✠</span>{metadata.opening_prayer}
+                    </p>
+                  )}
+                  {displayQuestions.map(function(q, i) {
+                    var qn = q.question_number || 1
+                    var isLast = i === displayQuestions.length - 1
+                    return (
+                      <div key={qn} style={{ borderBottom: isLast ? 'none' : '1px solid #f0e8d8', paddingBottom: isLast ? 0 : '1rem', marginBottom: isLast ? 0 : '1rem' }}>
+                        {q.title && <p style={{ fontWeight: 'bold', fontSize: '0.9rem', color: colors.vino, margin: '0 0 0.5rem' }}>{q.title}</p>}
+                        {q.content && <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, fontSize: '0.95rem', color: '#444', margin: '0 0 0.5rem' }}>{q.content}</p>}
+                        <textarea
+                          key={journal.slug + '-' + currentUnit + '-' + qn}
+                          style={Object.assign({}, s.textarea, { userSelect: 'text' })}
+                          value={answers[qn] || ''}
+                          onChange={function(e) {
+                            var val = e.target.value
+                            setAnswers(function(prev) {
+                              var next = Object.assign({}, prev, { [qn]: val })
+                              if (debounceRef.current) clearTimeout(debounceRef.current)
+                              debounceRef.current = setTimeout(function() {
+                                lsJournalSave(journal.slug, currentUnit, lang, next)
+                              }, 500)
+                              return next
+                            })
+                          }}
+                          placeholder={t.writeHere}
+                        />
+                      </div>
+                    )
+                  })}
+                  <button style={s.btn(saved ? colors.verde : colors.vino)} onClick={handleSave} disabled={saving}>{saving ? t.saving : saved ? t.saved : t.save}</button>
+                  {metadata && metadata.closing_prayer && (
+                    <p style={{ fontStyle: 'italic', lineHeight: 1.8, fontSize: '0.9rem', color: '#666', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f0e8d8' }}>
+                      <span style={{ color: colors.vino, marginRight: '0.4rem' }}>✠</span>{metadata.closing_prayer}
+                    </p>
+                  )}
+                </div>
+              </div>
             )}
           </>
         )}
