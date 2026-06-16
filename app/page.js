@@ -764,9 +764,25 @@ function ViewHoy({ tier, user, onSwitchView, lang, selectedDate, onDateChange })
           <div style={s.cardTitle}>{t.reflectionTitle}</div>
           <span style={{ color: colors.vino, fontSize: '0.85rem', marginBottom: '0.75rem' }}>{open.reflexion ? '▾' : '▸'}</span>
         </div>
-        {open.reflexion && (!reflection ? (
+        {open.reflexion && (!canReflection ? (
+          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔒</div>
+            <p style={Object.assign({}, s.p, { marginBottom: '0.5rem', color: '#888', fontSize: '0.88rem' })}>
+              {lang === 'en' ? 'Daily reflection for subscribers' : 'Reflexión diaria para suscriptores'}
+            </p>
+            <p style={Object.assign({}, s.p, { marginBottom: '1rem' })}>
+              {user ? t.subscribeToRead : t.signInToRead}
+            </p>
+            <button
+              style={Object.assign({}, s.btn(colors.vino), { marginTop: 0 })}
+              onClick={function() { user ? (onSwitchView && onSwitchView('precios')) : (window.location.href = '/login') }}
+            >
+              {user ? t.unlockBtn : t.signInBtn}
+            </button>
+          </div>
+        ) : !reflection ? (
           <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>{t.reflectionInPrep}</p>
-        ) : canReflection ? (
+        ) : (
           <div>
             {(mergedGospel.ref || reflection.gospel_ref) && (
               <p style={{ fontSize: '0.75rem', color: colors.oro, marginBottom: '1rem', fontWeight: 'bold', letterSpacing: '0.05em' }}>
@@ -804,19 +820,6 @@ function ViewHoy({ tier, user, onSwitchView, lang, selectedDate, onDateChange })
             ) : (
               <p style={Object.assign({}, s.p, { color: '#aaa', fontStyle: 'italic' })}>{t.reflectionInPrep}</p>
             )}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔒</div>
-            <p style={Object.assign({}, s.p, { marginBottom: '1rem' })}>
-              {user ? t.subscribeToRead : t.signInToRead}
-            </p>
-            <button
-              style={Object.assign({}, s.btn(colors.vino), { marginTop: 0 })}
-              onClick={function() { user ? (onSwitchView && onSwitchView('precios')) : (window.location.href = '/login') }}
-            >
-              {user ? t.unlockBtn : t.signInBtn}
-            </button>
           </div>
         ))}
       </div>
