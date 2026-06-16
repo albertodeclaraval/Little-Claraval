@@ -981,13 +981,13 @@ function ViewDiarios({ onOpen, tier, user, lang }) {
 
   var [progress, setProgress] = useState({})
   var [journalMetas, setJournalMetas] = useState({})
-  var [entitled, setEntitled] = useState(null)   // null = cargando; array de slugs
+  var [entitled, setEntitled] = useState(null)   // null = cargando; array de {journal_slug, source}
   var [busy, setBusy] = useState(null)
 
   function loadEntitlements() {
     if (!user) { setEntitled([]); return }
-    supabase.from('user_journal_entitlements').select('journal_slug').eq('user_id', user.id).then(function(r) {
-      setEntitled((r.data || []).map(function(row) { return row.journal_slug }))
+    supabase.from('user_journal_entitlements').select('journal_slug, source').eq('user_id', user.id).then(function(r) {
+      setEntitled(r.data || [])
     })
   }
   useEffect(function() { loadEntitlements() }, [user])
@@ -1012,13 +1012,21 @@ function ViewDiarios({ onOpen, tier, user, lang }) {
     })
   }, [lang])
 
-  var entitledSet = {}
   var entArr = entitled || []
-  entArr.forEach(function(sl) { entitledSet[sl] = true })
-  var usedSlots = allUnlocked ? 0 : entArr.length
+  var entitledMap = {}
+  entArr.forEach(function(row) { entitledMap[row.journal_slug] = row.source })
+  // Solo los cupos de tier cuentan para el límite; redemptions/addons son extra
+  var usedSlots = allUnlocked ? 0 : entArr.filter(function(r) { return r.source === 'tier' }).length
   var slotsLeft = Math.max(0, slotCount - usedSlots)
   var showSelector = !allUnlocked && slotCount > 0
-  function isUnlocked(slug) { return allUnlocked || !!entitledSet[slug] }
+  function isUnlocked(slug) {
+    if (allUnlocked) return true
+    var src = entitledMap[slug]
+    if (!src) return false
+    // Entitlements de tier solo cuentan si el tier sigue activo
+    if (src === 'tier' && tier === 'free') return false
+    return true
+  }
 
   function claim(slug) {
     if (busy) return
