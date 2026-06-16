@@ -1300,6 +1300,21 @@ function ViewPricing({ onCheckout, loading, tier, lang }) {
         <p style={Object.assign({}, s.p, { fontSize: '0.85rem' })}>{lang === 'en' ? 'Everything: 9 journals + future content' : 'Todo: 9 journals + contenido futuro'}</p>
         {lv >= 3 ? <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>{t.currentPlan}</div> : <button style={s.btn(colors.vino)} disabled={loading} onClick={function() { onCheckout('claraval') }}>{loading ? t.loading : t.subscribe}</button>}
       </div>
+
+      <div style={{ marginTop: '2rem', paddingTop: '1.25rem', borderTop: '1px solid #e8dcc8', textAlign: 'center' }}>
+        <p style={{ fontSize: '0.82rem', color: '#888', marginBottom: '0.5rem' }}>
+          {lang === 'en' ? 'Questions? We\'d love to hear from you.' : '¿Tienes preguntas? Con gusto te ayudamos.'}
+        </p>
+        <p style={{ fontSize: '0.85rem', color: colors.vino, fontWeight: 'bold', margin: '0 0 0.25rem' }}>
+          {lang === 'en' ? 'Contact us' : 'Contáctanos'}
+        </p>
+        <a href="mailto:contactus@littleclaraval.com" style={{ display: 'block', color: colors.azul, fontSize: '0.85rem', textDecoration: 'none', marginBottom: '0.2rem' }}>
+          contactus@littleclaraval.com
+        </a>
+        <a href="mailto:contacto@littleclaraval.com" style={{ display: 'block', color: '#aaa', fontSize: '0.78rem', textDecoration: 'none' }}>
+          contacto@littleclaraval.com
+        </a>
+      </div>
     </div>
   )
 }
