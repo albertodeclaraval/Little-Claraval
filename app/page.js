@@ -976,7 +976,7 @@ function ViewHoy({ tier, user, onSwitchView, lang, selectedDate, onDateChange })
 }
 
 // ── ViewDiarios ───────────────────────────────────────────────────────────────
-function ViewDiarios({ onOpen, tier, user, lang }) {
+function ViewDiarios({ onOpen, tier, user, lang, onSwitchView }) {
   var t = T[lang] || T.es
   var en = lang === 'en'
   var allUnlocked = tier === 'claraval'
@@ -1069,50 +1069,89 @@ function ViewDiarios({ onOpen, tier, user, lang }) {
 
       {entitled === null ? (
         <p style={{ color: '#888' }}>{t.loading}</p>
-      ) : (
+      ) : allUnlocked ? (
         <div style={s.journalGrid}>
           {JOURNALS.map(function(j) {
-            var unlocked = isUnlocked(j.slug)
             var unit = progress[j.slug] || 0
             var pct = Math.round((unit / j.total) * 100)
             var unitLabel = j.type === 'weekly' ? t.weekLabel : t.dayLabel
             var meta = journalMetas[j.slug]
             var desc = meta && meta.description ? (meta.description.length > 80 ? meta.description.slice(0, 80) + '...' : meta.description) : null
             var title = en ? (j.titleEn || j.title) : j.title
-            var canClaim = !unlocked && showSelector && slotsLeft > 0
-            var isBusy = busy === j.slug
             return (
-              <div key={j.slug} style={Object.assign({}, s.journalCard, { opacity: unlocked ? 1 : 0.55, cursor: unlocked ? 'pointer' : 'default' })}
-                   onClick={function() { if (unlocked) onOpen(j, unit + 1) }}>
+              <div key={j.slug} style={Object.assign({}, s.journalCard, { cursor: 'pointer' })}
+                   onClick={function() { onOpen(j, unit + 1) }}>
                 <div style={{ fontSize: '0.7rem', color: colors.oro, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                  {unlocked ? unitLabel + ' ' + (unit + 1) + ' / ' + j.total : t.locked}
+                  {unitLabel + ' ' + (unit + 1) + ' / ' + j.total}
                 </div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: colors.texto }}>{title}</div>
                 {desc && <p style={{ fontSize: '0.78rem', color: '#888', lineHeight: 1.4, marginTop: '0.3rem', marginBottom: 0 }}>{desc}</p>}
-                {unlocked && !allUnlocked && (
-                  <button onClick={function(e) { e.stopPropagation(); release(j.slug) }} disabled={isBusy}
-                          style={{ background: 'none', border: 'none', color: colors.azul, cursor: 'pointer', fontSize: '0.72rem', padding: '0.4rem 0 0', marginTop: '0.3rem' }}>
-                    {isBusy ? '…' : (en ? 'Release' : 'Soltar')}
-                  </button>
-                )}
-                {canClaim && (
-                  <button onClick={function(e) { e.stopPropagation(); claim(j.slug) }} disabled={isBusy}
-                          style={Object.assign({}, s.btn(colors.vino), { marginTop: '0.6rem', fontSize: '0.8rem', padding: '0.5rem' })}>
-                    {isBusy ? '…' : (en ? 'Choose' : 'Elegir')}
-                  </button>
-                )}
-                {unlocked && <div style={{ height: '4px', backgroundColor: '#f0e8d8', borderRadius: '2px', marginTop: '0.75rem' }}><div style={{ height: '4px', width: pct + '%', backgroundColor: colors.oro, borderRadius: '2px' }} /></div>}
+                <div style={{ height: '4px', backgroundColor: '#f0e8d8', borderRadius: '2px', marginTop: '0.75rem' }}>
+                  <div style={{ height: '4px', width: pct + '%', backgroundColor: colors.oro, borderRadius: '2px' }} />
+                </div>
               </div>
             )
           })}
         </div>
-      )}
-
-      {tier === 'free' && (
-        <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '1.25rem', textAlign: 'center' }}>
-          {en ? 'Choose a plan to unlock journals.' : 'Elige un plan para desbloquear diarios.'}
-        </p>
-      )}
+      ) : (function() {
+        var unlockedJournals = JOURNALS.filter(function(j) { return isUnlocked(j.slug) })
+        if (unlockedJournals.length === 0) {
+          return (
+            <div style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📖</div>
+              <p style={{ color: '#888', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+                {en ? 'You have no journals unlocked yet.' : 'Todavía no tienes diarios desbloqueados.'}
+              </p>
+              <button style={Object.assign({}, s.btn(colors.vino), { width: 'auto', padding: '0.65rem 1.5rem' })}
+                      onClick={function() { onSwitchView && onSwitchView('catalogo') }}>
+                {en ? 'Explore Catalog' : 'Explorar Catálogo'}
+              </button>
+            </div>
+          )
+        }
+        return (
+          <div>
+            <div style={s.journalGrid}>
+              {unlockedJournals.map(function(j) {
+                var unit = progress[j.slug] || 0
+                var pct = Math.round((unit / j.total) * 100)
+                var unitLabel = j.type === 'weekly' ? t.weekLabel : t.dayLabel
+                var meta = journalMetas[j.slug]
+                var desc = meta && meta.description ? (meta.description.length > 80 ? meta.description.slice(0, 80) + '...' : meta.description) : null
+                var title = en ? (j.titleEn || j.title) : j.title
+                var isBusy = busy === j.slug
+                return (
+                  <div key={j.slug} style={Object.assign({}, s.journalCard, { cursor: 'pointer' })}
+                       onClick={function() { onOpen(j, unit + 1) }}>
+                    <div style={{ fontSize: '0.7rem', color: colors.oro, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                      {unitLabel + ' ' + (unit + 1) + ' / ' + j.total}
+                    </div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: colors.texto }}>{title}</div>
+                    {desc && <p style={{ fontSize: '0.78rem', color: '#888', lineHeight: 1.4, marginTop: '0.3rem', marginBottom: 0 }}>{desc}</p>}
+                    <button onClick={function(e) { e.stopPropagation(); release(j.slug) }} disabled={isBusy}
+                            style={{ background: 'none', border: 'none', color: colors.azul, cursor: 'pointer', fontSize: '0.72rem', padding: '0.4rem 0 0', marginTop: '0.3rem' }}>
+                      {isBusy ? '…' : (en ? 'Release' : 'Soltar')}
+                    </button>
+                    <div style={{ height: '4px', backgroundColor: '#f0e8d8', borderRadius: '2px', marginTop: '0.75rem' }}>
+                      <div style={{ height: '4px', width: pct + '%', backgroundColor: colors.oro, borderRadius: '2px' }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            {slotsLeft > 0 && (
+              <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+                <button style={{ background: 'none', border: '1px solid ' + colors.vino, color: colors.vino, borderRadius: '6px', padding: '0.5rem 1.25rem', cursor: 'pointer', fontSize: '0.85rem' }}
+                        onClick={function() { onSwitchView && onSwitchView('catalogo') }}>
+                  {en
+                    ? '+ Add journal (' + slotsLeft + ' slot' + (slotsLeft > 1 ? 's' : '') + ' left)'
+                    : '+ Agregar diario (' + slotsLeft + ' cupo' + (slotsLeft > 1 ? 's' : '') + ' disponible' + (slotsLeft > 1 ? 's' : '') + ')'}
+                </button>
+              </div>
+            )}
+          </div>
+        )
+      })()}
     </div>
   )
 }
@@ -1788,10 +1827,13 @@ function LangToggle({ lang, onChange }) {
 }
 
 // ── ViewCatalog (Get Your Journals) ─────────────────────────────────────────
-function ViewCatalog({ onSwitchView, tier, lang }) {
+function ViewCatalog({ onSwitchView, tier, user, lang }) {
   var t = T[lang] || T.es
+  var en = lang === 'en'
   var [journals, setJournals] = useState([])
   var [loading, setLoading] = useState(true)
+  var [entitled, setEntitled] = useState([])   // {journal_slug, source}[]
+  var [busy, setBusy] = useState(null)
 
   useEffect(function() {
     setLoading(true)
@@ -1804,7 +1846,30 @@ function ViewCatalog({ onSwitchView, tier, lang }) {
       .then(function(r) { setJournals(r.data || []); setLoading(false) })
   }, [lang])
 
+  useEffect(function() {
+    if (!user) { setEntitled([]); return }
+    supabase.from('user_journal_entitlements').select('journal_slug, source').eq('user_id', user.id)
+      .then(function(r) { setEntitled(r.data || []) })
+  }, [user])
+
   var hasAll = tier === 'claraval'
+  var slotCount = tier === 'claraval' ? 999 : tier === 'discipulo' ? 3 : tier === 'peregrino' ? 1 : 0
+  var usedSlots = entitled.filter(function(r) { return r.source === 'tier' }).length
+  var slotsLeft = Math.max(0, slotCount - usedSlots)
+  var entitledSlugs = {}
+  entitled.forEach(function(r) { entitledSlugs[r.journal_slug] = true })
+
+  function claimFromCatalog(slug) {
+    if (busy) return
+    setBusy(slug)
+    supabase.rpc('claim_journal', { p_slug: slug }).then(function(r) {
+      setBusy(null)
+      if (r.error) { alert(en ? 'Could not select this journal.' : 'No se pudo elegir este diario.'); return }
+      supabase.from('user_journal_entitlements').select('journal_slug, source').eq('user_id', user.id)
+        .then(function(r2) { setEntitled(r2.data || []) })
+    })
+  }
+
   function audienceColor(a) { return a === 'hombres' ? colors.azul : a === 'mujeres' ? colors.vino : colors.verde }
 
   return (
@@ -1814,17 +1879,20 @@ function ViewCatalog({ onSwitchView, tier, lang }) {
       {loading ? <p style={{ color: '#888' }}>{t.loading}</p> : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           {journals.map(function(j) {
+            var slug = j.journal_slug
+            var isBusy = busy === slug
+            var owned = entitledSlugs[slug]
             return (
-              <div key={j.journal_slug} style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column' }}>
+              <div key={slug} style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ width: '100%', aspectRatio: '4 / 5', backgroundColor: '#ece3d2', overflow: 'hidden' }}>
                   {j.cover_url && (
-                    <img src={j.cover_url} alt={j.title || j.journal_slug}
+                    <img src={j.cover_url} alt={j.title || slug}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       onError={function(e) { e.target.style.display = 'none' }} />
                   )}
                 </div>
                 <div style={{ padding: '0.85rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: colors.texto, marginBottom: '0.35rem' }}>{j.title || j.journal_slug}</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: colors.texto, marginBottom: '0.35rem' }}>{j.title || slug}</div>
                   {j.audience && (
                     <div style={{ alignSelf: 'flex-start', backgroundColor: audienceColor(j.audience), color: 'white', borderRadius: '20px', padding: '0.1rem 0.6rem', fontSize: '0.68rem', marginBottom: '0.5rem' }}>
                       {(t.audienceLabels && t.audienceLabels[j.audience]) || ''}
@@ -1836,9 +1904,30 @@ function ViewCatalog({ onSwitchView, tier, lang }) {
                     </p>
                   )}
                   <div style={{ marginTop: 'auto' }}>
-                    {hasAll
-                      ? <div style={Object.assign({}, s.badge(colors.verde), { marginBottom: 0 })}>{t.includedInPlan}</div>
-                      : <button style={Object.assign({}, s.btn(colors.vino), { marginTop: 0, fontSize: '0.82rem', padding: '0.6rem' })} onClick={function() { onSwitchView && onSwitchView('precios') }}>{t.getIt}</button>}
+                    {hasAll || owned ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <div style={Object.assign({}, s.badge(colors.verde), { marginBottom: 0 })}>
+                          {owned ? (en ? 'In your library' : 'En tu biblioteca') : t.includedInPlan}
+                        </div>
+                        {owned && (
+                          <button style={{ background: 'none', border: 'none', color: colors.azul, cursor: 'pointer', fontSize: '0.78rem', padding: 0 }}
+                                  onClick={function() { onSwitchView && onSwitchView('diarios') }}>
+                            {en ? 'Open →' : 'Abrir →'}
+                          </button>
+                        )}
+                      </div>
+                    ) : slotsLeft > 0 ? (
+                      <button style={Object.assign({}, s.btn(colors.vino), { marginTop: 0, fontSize: '0.82rem', padding: '0.6rem' })}
+                              disabled={isBusy}
+                              onClick={function() { claimFromCatalog(slug) }}>
+                        {isBusy ? '…' : (en ? 'Choose this journal' : 'Elegir este diario')}
+                      </button>
+                    ) : (
+                      <button style={Object.assign({}, s.btn(colors.vino), { marginTop: 0, fontSize: '0.82rem', padding: '0.6rem' })}
+                              onClick={function() { onSwitchView && onSwitchView('precios') }}>
+                        {t.getIt}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1960,9 +2049,9 @@ function App() {
         {tabs.map(function(tab) { return <button key={tab.id} style={s.navBtn(vista === tab.id)} onClick={function() { setVista(tab.id); setJournalAbierto(null) }}>{tab.label}</button> })}
       </nav>
       {vista === 'hoy' && <ViewHoy tier={tier} user={user} onSwitchView={setVista} lang={lang} selectedDate={selectedDate} onDateChange={changeDate} />}
-      {vista === 'diarios' && !journalAbierto && <ViewDiarios onOpen={function(j, u) { setJournalAbierto(j); setJournalUnit(u) }} tier={tier} user={user} lang={lang} />}
+      {vista === 'diarios' && !journalAbierto && <ViewDiarios onOpen={function(j, u) { setJournalAbierto(j); setJournalUnit(u) }} tier={tier} user={user} lang={lang} onSwitchView={setVista} />}
       {vista === 'diarios' && journalAbierto && <ViewJournal journal={journalAbierto} initialUnit={journalUnit} onBack={function() { setJournalAbierto(null) }} user={user} lang={lang} />}
-      {vista === 'catalogo' && <ViewCatalog onSwitchView={setVista} tier={tier} lang={lang} />}
+      {vista === 'catalogo' && <ViewCatalog onSwitchView={setVista} tier={tier} user={user} lang={lang} />}
       {vista === 'precios' && <ViewPricing onCheckout={handleCheckout} loading={loading} tier={tier} lang={lang} />}
       {vista === 'canjear' && <ViewRedeem user={user} lang={lang} />}
     </div>
