@@ -438,6 +438,11 @@ var rosaryPrayers = {
     es: 'Jesús, mi Señor y Redentor, yo me arrepiento de todos los pecados que he cometido hasta hoy, y me pesa de todo corazón, porque con ellos he ofendido a un Dios tan bueno. Propongo firmemente no volver a pecar y confío que por tu infinita misericordia me has de conceder el perdón de mis culpas y me has de llevar a la vida eterna. Amén.',
     en: 'Jesus, my Lord and Redeemer, I repent of all the sins I have committed up to this day, and I am sorry for them with all my heart, because by them I have offended a God so good. I firmly resolve never to sin again, and I trust that, through your infinite mercy, you will grant me the forgiveness of my sins and lead me to eternal life. Amen.',
   },
+  gloria: {
+    label: { es: 'Gloria', en: 'Glory Be' },
+    es: 'Gloria al Padre, al Hijo y al Espíritu Santo. Como era en un principio, ahora y siempre, por los siglos de los siglos. Amén.',
+    en: 'Glory be to the Father, and to the Son, and to the Holy Spirit. As it was in the beginning, is now, and ever shall be, world without end. Amen.',
+  },
   fatima: {
     label: { es: 'Oración de Fátima', en: 'Fatima Prayer' },
     es: '¡Oh Jesús mío!, perdona nuestros pecados, líbranos del fuego del infierno, lleva todas las almas al cielo y socorre especialmente a las más necesitadas de tu misericordia.',
@@ -531,6 +536,8 @@ function RosarioContent({ rosary, weekday, t, lang }) {
                   </p>
                 )}
                 <div style={{ margin: '0.65rem 0 0 1.6rem', paddingTop: '0.55rem', borderTop: '1px dotted #e8dcc8' }}>
+                  <p style={prayerSectionHeader}>{rosaryPrayers.gloria.label[lang] || rosaryPrayers.gloria.label.es}</p>
+                  <p style={{ ...prayerBodyText, margin: '0 0 0.7rem' }}>{rosaryPrayers.gloria[lang] || rosaryPrayers.gloria.es}</p>
                   <p style={prayerSectionHeader}>{rosaryPrayers.fatima.label[lang] || rosaryPrayers.fatima.label.es}</p>
                   <p style={{ ...prayerBodyText, margin: '0 0 0.4rem' }}>{rosaryPrayers.fatima[lang] || rosaryPrayers.fatima.es}</p>
                   <p style={prayerLabel}>Latín</p>
