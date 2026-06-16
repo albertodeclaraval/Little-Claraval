@@ -45,8 +45,116 @@ var RESUMED_ORDINARY_TIME = {
 function ordinaryTimeWeek(date) {
   var d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   var entry = RESUMED_ORDINARY_TIME[date.getFullYear()]
-  if (!entry || d < entry.start) return null
-  return entry.week + Math.floor((d - entry.start) / (7 * 86400000))
+  if (entry && d >= entry.start) {
+    return entry.week + Math.floor((d - entry.start) / (7 * 86400000))
+  }
+  // Dynamic fallback: count back from Christ the King (last Sunday before Advent)
+  var year = d.getFullYear()
+  var DAY = 86400000
+  var advStart = adventStart(year)
+  var christKingMs = advStart.getTime() - 7 * DAY
+  var dow = d.getDay()
+  var nextSunMs = d.getTime() + (dow === 0 ? 0 : (7 - dow)) * DAY
+  if (nextSunMs > christKingMs) return null
+  return 34 - Math.round((christKingMs - nextSunMs) / (7 * DAY))
+}
+
+// Internal liturgical calendar fallback — used when the external API has no data for a year.
+// Returns a structure compatible with the external API response format.
+function computeLiturgicalDay(date) {
+  var year = date.getFullYear()
+  var DAY = 86400000
+  // Normalize to midnight (local) so timestamp comparisons work regardless of time component
+  var dNorm = new Date(year, date.getMonth(), date.getDate())
+  var dMs = dNorm.getTime()
+
+  var easter = easterSunday(year)
+  var eMs = easter.getTime()
+  var ashWedMs  = eMs - 46 * DAY
+  var palmSunMs = eMs - 7 * DAY
+  var ascMs     = eMs + 39 * DAY   // Ascension Thursday
+  var pentMs    = eMs + 49 * DAY   // Pentecost Sunday
+  var trinMs    = eMs + 56 * DAY   // Trinity Sunday
+  var corpMs    = eMs + 63 * DAY   // Corpus Christi (transferred to Sunday in US)
+  var shMs      = eMs + 68 * DAY   // Sacred Heart Friday
+
+  var advStart = adventStart(year)
+  var advMs = advStart.getTime()
+  var christKingMs = advMs - 7 * DAY
+
+  // Baptism of Lord = Sunday after Jan 6
+  var jan6 = new Date(year, 0, 6)
+  var jan6dow = jan6.getDay()
+  var baptismMs = jan6.getTime() + (jan6dow === 0 ? 7 : 7 - jan6dow) * DAY
+
+  var xmasMs = new Date(year, 11, 25).getTime()
+
+  var season, week = null, celebName = null
+
+  if (dMs >= advMs && dMs < xmasMs) {
+    // Advent
+    season = 'Advent'
+    week = Math.floor((dMs - advMs) / (7 * DAY)) + 1
+    if (week > 4) week = 4
+  } else if (dMs >= xmasMs) {
+    // Christmas (Dec 25 onward in same calendar year)
+    season = 'Christmas'
+    week = 0
+    if (dMs === xmasMs) celebName = 'Nativity of the Lord'
+  } else if (dMs <= baptismMs) {
+    // Christmas season: Jan 1 through Baptism of Lord
+    season = 'Christmas'
+    week = 0
+    if (dNorm.getMonth() === 0 && dNorm.getDate() === 1) celebName = 'Mary, Mother of God'
+    else if (dNorm.getMonth() === 0 && dNorm.getDate() === 6) celebName = 'Epiphany of the Lord'
+  } else if (dMs > baptismMs && dMs < ashWedMs) {
+    // Ordinary Time before Lent
+    season = 'Ordinary Time'
+    var dowPre = dNorm.getDay()
+    var prevSunMs = dMs - dowPre * DAY
+    week = Math.round((prevSunMs - baptismMs) / (7 * DAY)) + 1
+    if (week < 1) week = 1
+  } else if (dMs >= ashWedMs && dMs < eMs) {
+    // Lent and Holy Week
+    if (dMs === ashWedMs) {
+      season = 'Lent'; celebName = 'Ash Wednesday'; week = 0
+    } else if (dMs >= palmSunMs) {
+      season = 'Holy Week'
+      if (dMs === palmSunMs) celebName = 'Palm Sunday'
+      week = 6
+    } else {
+      season = 'Lent'
+      var firstLentSunMs = ashWedMs + 4 * DAY  // Ash Wed (Wed) + 4 days = Sunday
+      week = dMs < firstLentSunMs ? 0 : Math.floor((dMs - firstLentSunMs) / (7 * DAY)) + 1
+    }
+  } else if (dMs >= eMs && dMs <= pentMs) {
+    // Easter season
+    season = 'Easter'
+    week = Math.floor((dMs - eMs) / (7 * DAY)) + 1
+    if (dMs === ascMs) celebName = 'Ascension of the Lord'
+    else if (dMs === pentMs) celebName = 'Pentecost Sunday'
+  } else {
+    // Ordinary Time after Pentecost (covers Trinity, Corpus Christi, etc.)
+    season = 'Ordinary Time'
+    var dowPost = dNorm.getDay()
+    var nextSunMs = dMs + (dowPost === 0 ? 0 : (7 - dowPost)) * DAY
+    week = 34 - Math.round((christKingMs - nextSunMs) / (7 * DAY))
+    if (week < 1) week = 1
+    if (week > 34) week = 34
+    if (dMs === trinMs)        celebName = 'Most Holy Trinity'
+    else if (dMs === corpMs)   celebName = 'Most Holy Body and Blood of Christ'
+    else if (dMs === shMs)     celebName = 'Sacred Heart of Jesus'
+    else if (dMs === christKingMs) celebName = 'Christ the King'
+    else if (dNorm.getMonth() === 7 && dNorm.getDate() === 15) celebName = 'Assumption of the Blessed Virgin Mary'
+    else if (dNorm.getMonth() === 10 && dNorm.getDate() === 1) celebName = 'All Saints'
+    else if (dNorm.getMonth() === 11 && dNorm.getDate() === 8) celebName = 'Immaculate Conception'
+  }
+
+  return {
+    season: season,
+    week: week,
+    celebration: celebName ? { name: celebName } : null,
+  }
 }
 
 // Week within Easter season (1 = Easter Sunday's week)
@@ -135,6 +243,7 @@ export async function fetchDayReadings(date, lang) {
   try {
     var d = date instanceof Date ? date : new Date(date + 'T12:00:00')
     var litDay = await fetchLiturgicalDay(d)
+    if (!litDay) litDay = computeLiturgicalDay(d)
     if (!litDay) return null
 
     var weekday = d.getDay()
@@ -170,6 +279,7 @@ export async function fetchDayReflection(date, lang) {
   try {
     var d = date instanceof Date ? date : new Date(date + 'T12:00:00')
     var litDay = await fetchLiturgicalDay(d)
+    if (!litDay) litDay = computeLiturgicalDay(d)
     if (!litDay) return null
 
     var weekday = d.getDay()
@@ -310,6 +420,7 @@ export async function getLiturgicalPosition(date) {
   try {
     var d = date instanceof Date ? date : new Date(date + 'T12:00:00')
     var litDay = await fetchLiturgicalDay(d)
+    if (!litDay) litDay = computeLiturgicalDay(d)
     if (!litDay) return null
 
     var weekday = d.getDay()
