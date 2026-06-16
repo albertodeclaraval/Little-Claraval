@@ -1326,7 +1326,13 @@ function ViewRedeem({ user, lang }) {
   async function handleRedeem() {
     if (!code.trim()) return; setLd(true); setMsg('')
     try {
-      var r = await fetch('/api/redeem', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code.trim(), userId: user.id }) })
+      var sess = await supabase.auth.getSession()
+      var token = sess.data.session ? sess.data.session.access_token : ''
+      var r = await fetch('/api/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ code: code.trim() })
+      })
       var d = await r.json()
       if (d.success) { setMsg(d.message); setCode('') } else { setMsg('Error: ' + d.error) }
     } catch (e) { setMsg('Error de conexion') }
