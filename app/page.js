@@ -431,6 +431,38 @@ function CoronillaContent({ chaplet, t }) {
   )
 }
 
+// ── Rosario prayers (hardcoded — universal fixed prayers) ────────────────────
+var rosaryPrayers = {
+  actoContricion: {
+    label: { es: 'Acto de Contrición', en: 'Act of Contrition' },
+    es: 'Jesús, mi Señor y Redentor, yo me arrepiento de todos los pecados que he cometido hasta hoy, y me pesa de todo corazón, porque con ellos he ofendido a un Dios tan bueno. Propongo firmemente no volver a pecar y confío que por tu infinita misericordia me has de conceder el perdón de mis culpas y me has de llevar a la vida eterna. Amén.',
+    en: 'Jesus, my Lord and Redeemer, I repent of all the sins I have committed up to this day, and I am sorry for them with all my heart, because by them I have offended a God so good. I firmly resolve never to sin again, and I trust that, through your infinite mercy, you will grant me the forgiveness of my sins and lead me to eternal life. Amen.',
+  },
+  fatima: {
+    label: { es: 'Oración de Fátima', en: 'Fatima Prayer' },
+    es: '¡Oh Jesús mío!, perdona nuestros pecados, líbranos del fuego del infierno, lleva todas las almas al cielo y socorre especialmente a las más necesitadas de tu misericordia.',
+    en: 'O my Jesus, forgive us our sins, save us from the fires of hell, lead all souls to Heaven, especially those most in need of Thy mercy.',
+    la: 'O mi Iesu, dimitte nobis debita nostra, salva nos ab igne inferni, perduc in caelum omnes animas, praesertim illas quae maxime indigent misericordia tua.',
+  },
+  salveRegina: {
+    label: { es: 'Salve Regina', en: 'Hail Holy Queen' },
+    es: 'Dios te salve, Reina y Madre de misericordia, vida, dulzura y esperanza nuestra: Dios te salve. A ti llamamos los desterrados hijos de Eva; a ti suspiramos, gimiendo y llorando en este valle de lágrimas. Ea, pues, Señora, abogada nuestra, vuelve a nosotros esos tus ojos misericordiosos y, después de este destierro, muéstranos a Jesús, fruto bendito de tu vientre. ¡Oh clementísima! ¡oh piadosa! ¡oh dulce Virgen María!\nV. Ruega por nosotros, santa Madre de Dios.\nR. Para que seamos dignos de alcanzar las promesas de nuestro Señor Jesucristo. Amén.',
+    en: 'Hail, holy Queen, Mother of Mercy, our life, our sweetness, and our hope. To thee do we cry, poor banished children of Eve; to thee do we send up our sighs, mourning and weeping in this valley of tears. Turn then, most gracious Advocate, thine eyes of mercy toward us; and after this our exile, show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary.\nV. Pray for us, O holy Mother of God.\nR. That we may be made worthy of the promises of Christ. Amen.',
+    la: 'Salve, Regina, Mater misericordiae, vita, dulcedo et spes nostra, salve. Ad te clamamus, exsules filii Hevae. Ad te suspiramus, gementes et flentes in hac lacrimarum valle. Eia ergo, advocata nostra, illos tuos misericordes oculos ad nos converte. Et Iesum, benedictum fructum ventris tui, nobis post hoc exsilium ostende. O clemens, o pia, o dulcis Virgo Maria.\nV. Ora pro nobis, sancta Dei Genetrix.\nR. Ut digni efficiamur promissionibus Christi. Amen.',
+  },
+  sanMiguel: {
+    label: { es: 'San Miguel Arcángel', en: 'St. Michael the Archangel' },
+    es: 'San Miguel Arcángel, defiéndenos en la batalla. Sé nuestro amparo contra las perversidades y asechanzas del demonio. Reprímale Dios, pedimos suplicantes, y tú, príncipe de la milicia celestial, arroja al infierno con el divino poder a Satanás y a los otros espíritus malignos que andan dispersos por el mundo para la perdición de las almas. Amén.',
+    en: 'Saint Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil. May God rebuke him, we humbly pray; and do thou, O Prince of the heavenly host, by the power of God, cast into hell Satan and all the evil spirits who prowl about the world seeking the ruin of souls. Amen.',
+    la: 'Sancte Michaël Archangele, defende nos in proelio; contra nequitiam et insidias diaboli esto praesidium. Imperet illi Deus, supplices deprecamur: tuque, Princeps militiae caelestis, Satanam aliosque spiritus malignos, qui ad perditionem animarum pervagantur in mundo, divina virtute in infernum detrude. Amen.',
+  },
+  dulceMadre: {
+    label: { es: 'Dulce Madre', en: 'Sweet Mother' },
+    es: 'Dulce Madre, no te alejes, tu vista de nosotros no apartes. Ven con nosotros a todas partes y solos nunca nos dejes. Y ya que nos amas tanto, verdadera Madre que eres, haz que nos bendiga el Padre, el Hijo y el Espíritu Santo. Amén.',
+    en: 'Sweet Mother, do not go far from us; turn not your gaze away from us. Come with us wherever we go, and never leave us alone. And since you love us so, true Mother that you are, obtain for us the blessing of the Father, and of the Son, and of the Holy Spirit. Amen.',
+  },
+}
+
 // ── Rosario ──────────────────────────────────────────────────────────────────
 function RosarioContent({ rosary, weekday, t, lang }) {
   var [showInstructions, setShowInstructions] = useState(false)
@@ -466,6 +498,11 @@ function RosarioContent({ rosary, weekday, t, lang }) {
         )}
       </div>
 
+      <div style={{ marginBottom: '1.2rem', paddingBottom: '1.2rem', borderBottom: '1px solid #ede5d4' }}>
+        <p style={prayerSectionHeader}>{rosaryPrayers.actoContricion.label[lang] || rosaryPrayers.actoContricion.label.es}</p>
+        <p style={prayerBodyText}>{rosaryPrayers.actoContricion[lang] || rosaryPrayers.actoContricion.es}</p>
+      </div>
+
       {mysteries && Array.isArray(mysteries) && mysteries.length > 0 && (
         <div>
           <p style={prayerSectionHeader}>{t.mysteries5}</p>
@@ -493,11 +530,39 @@ function RosarioContent({ rosary, weekday, t, lang }) {
                     {m.fruit_latin && <span style={{ fontStyle: 'italic', color: '#bbb', fontSize: '0.78rem' }}> / {m.fruit_latin}</span>}
                   </p>
                 )}
+                <div style={{ margin: '0.65rem 0 0 1.6rem', paddingTop: '0.55rem', borderTop: '1px dotted #e8dcc8' }}>
+                  <p style={prayerSectionHeader}>{rosaryPrayers.fatima.label[lang] || rosaryPrayers.fatima.label.es}</p>
+                  <p style={{ ...prayerBodyText, margin: '0 0 0.4rem' }}>{rosaryPrayers.fatima[lang] || rosaryPrayers.fatima.es}</p>
+                  <p style={prayerLabel}>Latín</p>
+                  <p style={prayerLatinText}>{rosaryPrayers.fatima.la}</p>
+                </div>
               </div>
             )
           })}
         </div>
       )}
+
+      <div style={{ borderTop: '1px solid #e8dcc8', paddingTop: '0.85rem', marginBottom: '1rem' }}>
+        {[
+          { key: 'salveRegina', hasLatin: true },
+          { key: 'sanMiguel', hasLatin: true },
+          { key: 'dulceMadre', hasLatin: false },
+        ].map(function(item) {
+          var p = rosaryPrayers[item.key]
+          return (
+            <div key={item.key} style={{ marginBottom: '1.1rem', paddingBottom: '1.1rem', borderBottom: '1px solid #ede5d4' }}>
+              <p style={prayerSectionHeader}>{p.label[lang] || p.label.es}</p>
+              <p style={{ ...prayerBodyText, whiteSpace: 'pre-line', margin: '0 0 0.4rem' }}>{p[lang] || p.es}</p>
+              {item.hasLatin && (
+                <>
+                  <p style={prayerLabel}>Latín</p>
+                  <p style={{ ...prayerLatinText, whiteSpace: 'pre-line' }}>{p.la}</p>
+                </>
+              )}
+            </div>
+          )
+        })}
+      </div>
 
       {prayers && typeof prayers === 'object' && (
         <div style={{ borderTop: '1px solid #e8dcc8', paddingTop: '0.75rem' }}>
