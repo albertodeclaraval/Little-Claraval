@@ -52,10 +52,16 @@ export async function createCheckout({ variantId, userEmail, userId }) {
   return data.data.attributes.url;
 }
 
+// Todos los variants (mensual + anual) → tier. Solo servidor (webhook).
+const VARIANT_TIER_MAP = {
+  [process.env.LS_VARIANT_PEREGRINO_MES]:   'peregrino',
+  [process.env.LS_VARIANT_PEREGRINO_ANUAL]: 'peregrino',
+  [process.env.LS_VARIANT_DISCIPULO_MES]:   'discipulo',
+  [process.env.LS_VARIANT_DISCIPULO_ANUAL]: 'discipulo',
+  [process.env.LS_VARIANT_CLARAVAL_MES]:    'claraval',
+  [process.env.LS_VARIANT_CLARAVAL_ANUAL]:  'claraval',
+};
+
 export function variantToTier(variantId) {
-  const id = String(variantId);
-  if (id === String(PLAN_VARIANTS.peregrino)) return 'peregrino';
-  if (id === String(PLAN_VARIANTS.discipulo)) return 'discipulo';
-  if (id === String(PLAN_VARIANTS.claraval)) return 'claraval';
-  return 'free';
+  return VARIANT_TIER_MAP[String(variantId)] || 'free';
 }
