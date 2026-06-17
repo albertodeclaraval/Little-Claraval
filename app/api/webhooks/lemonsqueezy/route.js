@@ -77,6 +77,14 @@ export async function POST(request) {
       console.error('Supabase update error:', error);
       return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
     }
+
+    // Sincroniza entitlements al tier efectivo (recorta cupos en downgrade; no-op en upgrade).
+    // No falla el webhook si esto falla: el perfil ya quedó actualizado.
+    const { error: syncError } = await supabase.rpc('sync_tier_entitlements', { p_user_id: userId });
+    if (syncError) {
+      console.error('Entitlement sync error:', syncError);
+    }
+
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook processing error:', error);
