@@ -1,9 +1,9 @@
 const LEMONSQUEEZY_API_URL = 'https://api.lemonsqueezy.com/v1';
 
 export const PLAN_VARIANTS = {
-  peregrino: process.env.NEXT_PUBLIC_LS_VARIANT_PEREGRINO,
-  discipulo: process.env.NEXT_PUBLIC_LS_VARIANT_DISCIPULO,
-  claraval: process.env.NEXT_PUBLIC_LS_VARIANT_CLARAVAL,
+  peregrino: process.env.NEXT_PUBLIC_LS_VARIANT_PEREGRINO || '1800887',
+  discipulo: process.env.NEXT_PUBLIC_LS_VARIANT_DISCIPULO || '1800878',
+  claraval: process.env.NEXT_PUBLIC_LS_VARIANT_CLARAVAL || '1800896',
 };
 
 export async function createCheckout({ variantId, userEmail, userId }) {
