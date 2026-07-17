@@ -45,7 +45,7 @@ var T = {
     secondReading: 'Segunda Lectura', gospel: 'Evangelio',
     reflectionTitle: 'Reflexión — Alberto de Claraval',
     reflectionInPrep: 'Reflexión en preparación...',
-    premiumBadge: 'PREMIUM — Nivel Peregrino', unlockBtn: 'Desbloquear — $1.700 CLP/mes',
+    premiumBadge: 'PREMIUM — Nivel Peregrino', unlockBtn: 'Desbloquear — $1.700 CLP/mes (~US$2)',
     reflectionPreview: 'El silencio es el umbral de la contemplación. En él, Dios habla al corazón sin palabras. Detente un momento antes de comenzar el día y deja que la Palabra resuene en ti.',
     saintOfDay: 'Santo del Día', noInfo: 'Información no disponible',
     patronOf: 'Patrono/a de:', canonizedIn: 'Canonizado en', canonizedBy: ' por ',
@@ -118,7 +118,7 @@ var T = {
     secondReading: 'Second Reading', gospel: 'Gospel',
     reflectionTitle: 'Reflection — Alberto de Claraval',
     reflectionInPrep: 'Reflection in preparation...',
-    premiumBadge: 'PREMIUM — Peregrino Level', unlockBtn: 'Unlock — CLP $1,700/mo',
+    premiumBadge: 'PREMIUM — Peregrino Level', unlockBtn: 'Unlock — CLP $1,700/mo (~US$2)',
     reflectionPreview: 'Silence is the threshold of contemplation. In it, God speaks to the heart without words. Pause a moment before beginning the day and let the Word resonate within you.',
     saintOfDay: 'Saint of the Day', noInfo: 'Information not available',
     patronOf: 'Patron of:', canonizedIn: 'Canonized in', canonizedBy: ' by ',
@@ -1333,19 +1333,19 @@ function ViewPricing({ onCheckout, loading, tier, lang }) {
         {lv === 0 && <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>{t.currentPlan}</div>}
       </div>
       <div style={s.pricingCard(lv < 1)}>
-        <div style={Object.assign({}, s.badge(colors.oro), { color: lv < 1 ? colors.texto : 'white' })}>{lang === 'en' ? 'CLP $1,700/mo' : '$1.700 CLP/mes'}</div>
+        <div style={Object.assign({}, s.badge(colors.oro), { color: lv < 1 ? colors.texto : 'white' })}>{lang === 'en' ? 'CLP $1,700/mo (~US$2)' : '$1.700 CLP/mes (~US$2)'}</div>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Peregrino</h3>
         <p style={{ fontSize: '0.85rem', opacity: 0.9 }}>{lang === 'en' ? 'Daily reflection + 1 journal' : 'Reflexion diaria + 1 journal'}</p>
         {lv >= 1 ? <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>{t.included}</div> : <button style={Object.assign({}, s.btn('white'), { color: colors.vino })} disabled={loading} onClick={function() { onCheckout('peregrino') }}>{loading ? t.loading : t.subscribe}</button>}
       </div>
       <div style={s.pricingCard(false)}>
-        <div style={s.badge(colors.azul)}>{lang === 'en' ? 'CLP $3,400/mo' : '$3.400 CLP/mes'}</div>
+        <div style={s.badge(colors.azul)}>{lang === 'en' ? 'CLP $3,400/mo (~US$4)' : '$3.400 CLP/mes (~US$4)'}</div>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Discipulo</h3>
         <p style={Object.assign({}, s.p, { fontSize: '0.85rem' })}>{lang === 'en' ? 'Reflection + 3 journals' : 'Reflexion + 3 journals'}</p>
         {lv >= 2 ? <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>{t.included}</div> : <button style={s.btn(colors.azul)} disabled={loading} onClick={function() { onCheckout('discipulo') }}>{loading ? t.loading : t.subscribe}</button>}
       </div>
       <div style={s.pricingCard(false)}>
-        <div style={s.badge(colors.vino)}>{lang === 'en' ? 'CLP $5,400/mo' : '$5.400 CLP/mes'}</div>
+        <div style={s.badge(colors.vino)}>{lang === 'en' ? 'CLP $5,400/mo (~US$6)' : '$5.400 CLP/mes (~US$6)'}</div>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Claraval</h3>
         <p style={Object.assign({}, s.p, { fontSize: '0.85rem' })}>{lang === 'en' ? 'Everything: 9 journals + future content' : 'Todo: 9 journals + contenido futuro'}</p>
         {lv >= 3 ? <div style={Object.assign({}, s.badge(colors.verde), { marginTop: '0.75rem' })}>{t.currentPlan}</div> : <button style={s.btn(colors.vino)} disabled={loading} onClick={function() { onCheckout('claraval') }}>{loading ? t.loading : t.subscribe}</button>}
