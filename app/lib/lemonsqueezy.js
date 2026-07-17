@@ -63,5 +63,9 @@ const VARIANT_TIER_MAP = {
 };
 
 export function variantToTier(variantId) {
-  return VARIANT_TIER_MAP[String(variantId)] || 'free';
+  const tier = VARIANT_TIER_MAP[String(variantId)];
+  if (!tier) {
+    console.error('[variantToTier] variant no reconocido, cae a free:', variantId, '— revisar LS_VARIANT_*_MES/_ANUAL en Netlify');
+  }
+  return tier || 'free';
 }
