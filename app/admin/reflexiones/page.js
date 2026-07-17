@@ -132,17 +132,45 @@ export default function ReflexionesAdminPage() {
     })
   }, [])
 
-  // Load liturgical position when date changes
-  useEffect(function() {
-    if (!authorized || !date) return
+  function loadPosition(dateStr) {
     setLoadingPos(true)
     setPosError(null)
-    getLiturgicalPosition(new Date(date + 'T12:00:00')).then(function(pos) {
+    return getLiturgicalPosition(new Date(dateStr + 'T12:00:00')).then(function(pos) {
       setPosition(pos)
       setLoadingPos(false)
       if (!pos) setPosError('No se pudo determinar la posición litúrgica para esta fecha.')
     })
+  }
+
+  // Load liturgical position when date changes
+  useEffect(function() {
+    if (!authorized || !date) return
+    loadPosition(date)
   }, [date, authorized])
+
+  // C2: toggle feria/fiesta para memorias opcionales
+  async function handleToggleFeast(e) {
+    var newVal = e.target.checked
+    if (!sessionToken) return
+    try {
+      var res = await fetch('/api/admin/day-preference', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          authorization: 'Bearer ' + sessionToken,
+        },
+        body: JSON.stringify({ date: date, use_feast: newVal }),
+      })
+      var d = await res.json()
+      if (d.success) {
+        await loadPosition(date)
+      } else {
+        alert('Error al guardar preferencia: ' + (d.error || 'desconocido'))
+      }
+    } catch (err) {
+      alert('Error de conexión')
+    }
+  }
 
   // Load reflections when position changes
   useEffect(function() {
@@ -254,6 +282,12 @@ export default function ReflexionesAdminPage() {
                   <div style={{ fontSize: '0.78rem', color: '#888', marginTop: '0.15rem' }}>{position.celebrationName}</div>
                 )}
               </div>
+            )}
+            {!loadingPos && position && position.toggleable === true && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', color: colors.texto }}>
+                <input type="checkbox" checked={!!position.useFeast} onChange={handleToggleFeast} />
+                {position.useFeast ? ('Fiesta: ' + position.celebrationName) : 'Feria'}
+              </label>
             )}
             {posError && <span style={{ fontSize: '0.82rem', color: '#991b1b' }}>{posError}</span>}
           </div>

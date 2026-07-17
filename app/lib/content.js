@@ -209,16 +209,62 @@ var FEAST_KEY_MAP = {
   christ_king:           ['christ the king', 'christ, king of the universe'],
 }
 
-function getFeastKey(litDay) {
-  if (!litDay || !litDay.celebration) return null
-  var name = (litDay.celebration.name || '').toLowerCase()
-  for (var key in FEAST_KEY_MAP) {
-    var patterns = FEAST_KEY_MAP[key]
+// C2: memorias/fiestas cuyo uso depende del toggle feria/fiesta en /admin.
+// Para sumar una: agregar key + patrones (minúsculas, matching por .includes).
+var OPTIONAL_FEAST_KEY_MAP = {
+  our_lady_mount_carmel: ['our lady of mount carmel'],
+}
+
+// Keys que SIEMPRE usan su liturgia propia (ignoran reflection_day_preference)
+var ALWAYS_FEAST_KEYS = Object.keys(FEAST_KEY_MAP)
+
+function matchFeastKey(name, map) {
+  for (var key in map) {
+    var patterns = map[key]
     for (var i = 0; i < patterns.length; i++) {
       if (name.includes(patterns[i])) return key
     }
   }
   return null
+}
+
+function getFeastKey(litDay) {
+  if (!litDay || !litDay.celebration) return null
+  var name = (litDay.celebration.name || '').toLowerCase()
+  return matchFeastKey(name, FEAST_KEY_MAP) || matchFeastKey(name, OPTIONAL_FEAST_KEY_MAP)
+}
+
+// Fecha calendario LOCAL YYYY-MM-DD. No usar toISOString(): en zonas UTC+
+// (un usuario en Europa/Asia) daría el día equivocado.
+function localDateStr(d) {
+  var y = d.getFullYear()
+  var m = ('0' + (d.getMonth() + 1)).slice(-2)
+  var day = ('0' + d.getDate()).slice(-2)
+  return y + '-' + m + '-' + day
+}
+
+// C2: resuelve el feast_key efectivo según reflection_day_preference.
+// - ALWAYS_FEAST_KEYS: siempre su key, sin toggle
+// - memorias opcionales: key solo si use_feast=true; default feria
+// - sin fila o error: feria (fail-safe)
+async function resolveEffectiveFeastKey(d, rawFeastKey) {
+  if (!rawFeastKey) {
+    return { effective: null, rawFeastKey: null, useFeast: false, toggleable: false }
+  }
+  if (ALWAYS_FEAST_KEYS.indexOf(rawFeastKey) !== -1) {
+    return { effective: rawFeastKey, rawFeastKey: rawFeastKey, useFeast: true, toggleable: false }
+  }
+  try {
+    var { data } = await supabase
+      .from('reflection_day_preference')
+      .select('use_feast')
+      .eq('date', localDateStr(d))
+      .maybeSingle()
+    var useFeast = !!(data && data.use_feast)
+    return { effective: useFeast ? rawFeastKey : null, rawFeastKey: rawFeastKey, useFeast: useFeast, toggleable: true }
+  } catch (e) {
+    return { effective: null, rawFeastKey: rawFeastKey, useFeast: false, toggleable: true }
+  }
 }
 
 // Execute a query against `table` using the given liturgical parameters.
@@ -284,7 +330,9 @@ export async function fetchDayReflection(date, lang) {
 
     var weekday = d.getDay()
     var season  = normalizeSeason(litDay.season)
-    var feastKey = getFeastKey(litDay)
+    var rawFeastKey = getFeastKey(litDay)
+    var resolved = await resolveEffectiveFeastKey(d, rawFeastKey)
+    var feastKey = resolved.effective
     var week = extractWeek(litDay.celebration && litDay.celebration.name)
     if (week === null) week = litDay.week || (litDay.celebration && litDay.celebration.week) || null
     if (week === null && season === 'easter') week = easterWeek(d)
@@ -425,7 +473,9 @@ export async function getLiturgicalPosition(date) {
 
     var weekday = d.getDay()
     var season = normalizeSeason(litDay.season)
-    var feastKey = getFeastKey(litDay) || ''
+    var rawFeastKey = getFeastKey(litDay)
+    var resolved = await resolveEffectiveFeastKey(d, rawFeastKey)
+    var feastKey = resolved.effective || ''
     var week = extractWeek(litDay.celebration && litDay.celebration.name)
     if (week === null) week = litDay.week || (litDay.celebration && litDay.celebration.week) || null
     if (week === null && season === 'easter') week = easterWeek(d)
@@ -438,6 +488,10 @@ export async function getLiturgicalPosition(date) {
       weekday,
       celebrationName: litDay.celebration && litDay.celebration.name,
       litSeason: litDay.season,
+      // C2
+      rawFeastKey: resolved.rawFeastKey,
+      useFeast: resolved.useFeast,
+      toggleable: resolved.toggleable,
     }
   } catch(e) {
     return null
