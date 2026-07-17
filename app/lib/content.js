@@ -294,7 +294,9 @@ export async function fetchDayReadings(date, lang) {
 
     var weekday = d.getDay()
     var season  = normalizeSeason(litDay.season)
-    var feastKey = getFeastKey(litDay)
+    var rawFeastKey = getFeastKey(litDay)
+    var resolved = await resolveEffectiveFeastKey(d, rawFeastKey)
+    var feastKey = resolved.effective
     var week = extractWeek(litDay.celebration && litDay.celebration.name)
     if (week === null) week = litDay.week || (litDay.celebration && litDay.celebration.week) || null
     if (week === null && season === 'easter') week = easterWeek(d)
