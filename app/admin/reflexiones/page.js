@@ -182,6 +182,7 @@ export default function ReflexionesAdminPage() {
       season: position.season,
       cycle: position.cycle,
       feast_key: position.feastKey || '',
+      weekday: position.weekday,
     })
     if (position.week !== null && position.week !== undefined) params.set('week', position.week)
 
@@ -212,6 +213,7 @@ export default function ReflexionesAdminPage() {
       cycle: position.cycle,
       feast_key: position.feastKey || '',
       week: position.week !== undefined ? position.week : null,
+      weekday: position.weekday,
     })
 
     try {
